@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SMART 생산일보</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><meta name="theme-color" content="#0D5C6B">
+<style>
+:root{
+  --bg:#F2F3F0;--panel:#FFFFFF;--panel2:#F7F8F6;--ink:#1A2220;--ink2:#56625E;--ink3:#7D8884;--line:#DADFD9;--line2:#E8EBE7;
+  --accent:#0D5C6B;--accent-weak:#E0EDEF;--accent-ink:#FFFFFF;
+  --ok:#2E7D4F;--ok-bg:#E3F1E8;--warn:#A05F00;--warn-bg:#FBEFD9;--bad:#B3261E;--bad-bg:#FBE5E3;--na:#8A948F;
+  --cn:#7A4DB3;--cn-bg:#EFE8F8;--hq:#0D5C6B;--hq-bg:#E0EDEF;--dt:#2F5FB3;--dt-bg:#E3EAF8;
+  --shadow:0 10px 32px rgba(20,34,30,.18);
+  --sans:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,sans-serif;
+  --mono:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;--bg:#111614;--panel:#1A201E;--panel2:#161B19;--ink:#E6ECE9;--ink2:#9DAAA5;--ink3:#7B8782;--line:#2D3633;--line2:#232B28;
+  --accent:#62B7C7;--accent-weak:#173237;--accent-ink:#0B1A1D;
+  --ok:#6CC08E;--ok-bg:#17301F;--warn:#E0A03A;--warn-bg:#33270F;--bad:#F08A80;--bad-bg:#3A1715;--na:#75807B;
+  --cn:#B996EA;--cn-bg:#2A2138;--hq:#62B7C7;--hq-bg:#173237;--dt:#8DB0F0;--dt-bg:#1B2640;--shadow:0 10px 32px rgba(0,0,0,.55);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;--bg:#111614;--panel:#1A201E;--panel2:#161B19;--ink:#E6ECE9;--ink2:#9DAAA5;--ink3:#7B8782;--line:#2D3633;--line2:#232B28;
+  --accent:#62B7C7;--accent-weak:#173237;--accent-ink:#0B1A1D;
+  --ok:#6CC08E;--ok-bg:#17301F;--warn:#E0A03A;--warn-bg:#33270F;--bad:#F08A80;--bad-bg:#3A1715;--na:#75807B;
+  --cn:#B996EA;--cn-bg:#2A2138;--hq:#62B7C7;--hq-bg:#173237;--dt:#8DB0F0;--dt-bg:#1B2640;--shadow:0 10px 32px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-variant-numeric:tabular-nums;font-size:13px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:8px}
+.brand b{font-size:16px;font-weight:600;letter-spacing:.02em}
+.brand span{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.tabs{display:flex;gap:2px;margin-right:auto;flex-wrap:wrap;align-items:center}
+.sysw{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;margin-right:10px}
+.sysw button{border:0;background:var(--panel);color:var(--ink2);padding:5px 11px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.sysw button.on{background:var(--accent);color:#fff}
+.tabs button{border:0;background:none;padding:7px 12px;border-radius:6px;color:var(--ink2);font-weight:500}
+.tabs button:hover{background:var(--line2)}
+.tabs button.on{background:var(--accent-weak);color:var(--accent)}
+.tabs .n{font-family:var(--mono);font-size:11px;background:var(--bad);color:#fff;border-radius:9px;padding:0 6px;margin-left:4px}
+.who{display:flex;align-items:center;gap:8px}
+.who label{font-size:12px;color:var(--ink2)}
+select,input[type=text],input[type=date],input[type=search],input[type=number],textarea{padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel2)}
+.btn{padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);font-weight:500}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.sm{padding:3px 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.conn{font-size:11.5px;color:var(--ink3);display:flex;align-items:center;gap:6px}
+.conn i{width:8px;height:8px;border-radius:50%;background:var(--ink3);display:inline-block}
+.conn.live i{background:var(--ok)}
+.conn.off i{background:var(--bad)}
+main{flex:1;overflow:auto;padding:16px;padding-bottom:40px}
+.wrap{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h2{margin:0;font-size:18px;font-weight:600;text-wrap:balance}
+.sub{color:var(--ink2);font-size:12.5px;margin-top:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;text-align:left}
+button.kpi:hover{border-color:var(--accent)}
+.kpi .l{font-size:12px;color:var(--ink2)}
+.kpi .v{font-family:var(--mono);font-size:26px;font-weight:500;line-height:1.2;margin-top:2px}
+.kpi .s{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.kpi.bad .v{color:var(--bad)} .kpi.warn .v{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.card h3{margin:0 0 2px;font-size:14px;font-weight:600}
+.card .sub{margin:0 0 12px}
+.bars{display:grid;grid-template-columns:minmax(80px,max-content) 1fr max-content;gap:6px 10px;align-items:center}
+.bars .bl{font-size:12px}
+.bars .bt{height:12px;background:var(--line2);border-radius:3px;overflow:hidden;display:flex}
+.bars .bt span{display:block;height:100%}
+.bars .bn{font-family:var(--mono);font-size:12px;text-align:right}
+.seg-sn{background:var(--hq)} .seg-dt{background:var(--dt)} .seg-hi{background:var(--ink3)} .tag.hist{background:var(--line2);color:var(--ink2)} .seg-un{background:var(--na)} .seg-cn{background:var(--cn)} .seg-sy{background:#B8691E} .seg-do{background:#3F8F4E} .seg-bad{background:var(--bad)}
+.legend{display:flex;gap:14px;font-size:11.5px;color:var(--ink2);margin-bottom:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.cols{display:flex;align-items:flex-end;gap:8px;height:140px;padding-top:8px}
+.cols .c{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.cols .c .stack{width:100%;max-width:42px;display:flex;flex-direction:column-reverse;border-radius:3px 3px 0 0;overflow:hidden;background:var(--line2)}
+.cols .c .num{font-family:var(--mono);font-size:11.5px}
+.cols .c .lab{font-size:11px;color:var(--ink3);white-space:nowrap}
+table{border-collapse:separate;border-spacing:0;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line2);text-align:left;white-space:nowrap;vertical-align:middle}
+thead th{position:sticky;top:0;background:var(--panel2);font-size:12px;font-weight:600;color:var(--ink2);border-bottom:1px solid var(--line);cursor:pointer;z-index:1}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--panel2)}
+.tw{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:calc(100vh - 250px)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:6px 11px}
+.seg button.on{background:var(--accent-weak);color:var(--accent);font-weight:600}
+.drdate{display:inline-flex;align-items:center;gap:4px}.drdate b{min-width:76px;text-align:center}
+.drk{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.drk span{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--ink2)}.drk b{font-size:15px;color:var(--ink)}
+.drk .ok b{color:var(--ok)}.drk .warn b{color:var(--warn)}.drk .bad b{color:var(--bad)}
+.drcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.drcard{text-align:left;display:flex;flex-direction:column;gap:6px;cursor:pointer}.drcard:hover{border-color:var(--accent)}
+.drbig{font-size:26px;font-weight:700}.drbig.ok{color:var(--ok)}.drbig.warn{color:var(--warn)}.drbig.bad{color:var(--bad)}.drbig.na{color:var(--ink3)}
+.drr{display:inline-block;min-width:46px;text-align:center;font-weight:700;border-radius:4px;padding:1px 6px}.drr.ok{background:var(--ok-bg);color:var(--ok)}.drr.warn{background:var(--warn-bg);color:var(--warn)}.drr.bad{background:var(--bad-bg);color:var(--bad)}.drr.na{color:var(--ink3)}
+.drs.open{background:var(--bad);color:#fff}.note.drwarn{border:1px solid var(--bad);border-left-width:4px}.drgate{border:2px solid var(--warn)}
+.drs{display:inline-block;font-size:11.5px;font-weight:700;border-radius:4px;padding:2px 8px;margin-left:6px;vertical-align:middle}.drs.none{background:var(--line2);color:var(--ink2)}.drs.pub{background:var(--accent-weak);color:var(--accent)}.drs.closed{background:var(--ok-bg);color:var(--ok)}
+.drtw{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel);margin:8px 0}
+.drt{border-collapse:separate;border-spacing:0;width:100%}.drt th,.drt td{padding:6px 8px;border-bottom:1px solid var(--line2);white-space:nowrap;vertical-align:middle;text-align:left}
+.drt thead th{position:sticky;top:0;background:var(--panel2);font-size:12px;color:var(--ink2);z-index:1}.drt .n{text-align:right}.drt .c{text-align:center}
+.drt tr.drg td{background:var(--panel2);font-weight:700;border-top:1px solid var(--line)}
+.drin{width:62px;text-align:right;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}.drin.err{border-color:var(--bad);background:var(--bad-bg)}.drin.auto{background:var(--accent-weak);color:var(--accent);font-weight:700}
+.drauto{background:var(--accent-weak);color:var(--accent);padding:0 4px;border-radius:3px;font-weight:700}
+.drmemo{width:220px;min-height:44px;resize:vertical;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.drlnk{border:0;background:none;padding:0;color:var(--accent);font-weight:700;cursor:pointer}.drlnk:hover{text-decoration:underline}
+.drhol{background:var(--bad-bg)}.drtoday{box-shadow:inset 0 -2px 0 var(--accent);color:var(--accent)}
+.tag.drcr{background:var(--warn-bg);color:var(--warn)}.drwk{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border:1px solid var(--line);border-radius:14px;cursor:pointer;font-size:12.5px;color:var(--ink2)}.drwk.on{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);font-weight:700}.drt tr.drcur td{background:var(--accent-weak)}.drin.carry{background:var(--warn-bg);color:var(--warn);font-weight:700}.drcarry{background:var(--warn-bg);color:var(--warn);padding:0 4px;border-radius:3px;font-weight:700}.drplan th,.drplan td{padding:3px 2px}.drplan .drin{width:42px;padding:3px 2px;text-align:center;font-size:12px}.drplan .drin::-webkit-inner-spin-button,.drplan .drin::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.drplan .drin{-moz-appearance:textfield}.drplan .drstep{padding-left:18px}.drplan .drs1{min-width:190px}.drplan .drwk0{border-left:2px solid var(--line)}.drplan td.drtc{background:var(--accent-weak)}.drplan .drs1{position:sticky;left:0;background:var(--panel);z-index:2}.drplan thead .drs1{background:var(--panel2);z-index:3}.tag.drcr3{background:var(--bad-bg);color:var(--bad)}
+.chk{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink2);user-select:none}
+.count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.mono{font-family:var(--mono);font-size:12px}
+.muted{color:var(--ink3)}
+.pno{font-family:var(--mono);font-weight:500;color:var(--accent)}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;border-radius:4px;padding:1px 6px;vertical-align:1px}
+.tag.sn{background:var(--hq-bg);color:var(--hq)} .tag.dt{background:var(--dt-bg);color:var(--dt)} .tag.un{background:var(--line2);color:var(--ink2);outline:1px dashed var(--na)} .tag.cn{background:var(--cn-bg);color:var(--cn)} .tag.sy{background:rgba(184,105,30,.15);color:#B8691E} .tag.do{background:rgba(63,143,78,.15);color:#3F8F4E}
+.tag.urg{background:var(--bad-bg);color:var(--bad)} .tag.hold{background:var(--warn-bg);color:var(--warn)}
+.tag.dept{background:var(--line2);color:var(--ink2);font-weight:500}
+.tag.shipped{background:var(--ok-bg);color:var(--ok)}
+.prog{display:inline-flex;align-items:center;gap:6px}
+.prog .b{width:70px;height:6px;background:var(--line2);border-radius:3px;overflow:hidden}
+.prog .b span{display:block;height:100%;background:var(--accent)}
+.late{color:var(--bad);font-weight:600} .early{color:var(--ok)}
+.more{display:block;margin:10px auto;padding:6px 16px}
+.empty{padding:36px;text-align:center;color:var(--ink2)}
+.note{padding:10px 12px;border:1px dashed var(--line);border-radius:8px;color:var(--ink2);font-size:12.5px;background:var(--panel)}
+/* inbox */
+.inbox{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+.list{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line2)}
+.item:last-child{border-bottom:0}
+.item .t{font-weight:500}
+.item .m{font-size:12px;color:var(--ink2);grid-column:2}
+.item input[type=checkbox]{width:18px;height:18px;accent-color:var(--ok)}
+/* timeline */
+.gantt{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:calc(100vh - 250px)}
+.g-row{display:grid;grid-template-columns:230px 1fr;border-bottom:1px solid var(--line2);min-height:30px}
+.g-row:hover{background:var(--panel2)}
+.g-name{padding:6px 10px;position:sticky;left:0;background:inherit;border-right:1px solid var(--line);display:flex;gap:6px;align-items:center;z-index:1;overflow:hidden;cursor:pointer}
+.g-row{background:var(--panel)}
+.g-head{position:sticky;top:0;z-index:2;background:var(--panel2);border-bottom:1px solid var(--line)}
+.g-head .g-name{background:var(--panel2);font-weight:600;font-size:12px;color:var(--ink2)}
+.g-track{position:relative;height:30px}
+.g-wk{position:absolute;top:0;bottom:0;border-left:1px solid var(--line2)}
+.g-wkl{position:absolute;top:8px;font-size:10.5px;color:var(--ink3);font-family:var(--mono);padding-left:4px;white-space:nowrap}
+.g-today{position:absolute;top:0;bottom:0;border-left:2px solid var(--accent);z-index:1}
+.g-bar{position:absolute;top:9px;height:12px;border-radius:6px;background:var(--line);overflow:hidden;cursor:pointer}
+.g-bar span{display:block;height:100%;background:var(--hq)}
+.g-bar.cn span{background:var(--cn)} .g-bar.dt span{background:var(--dt)}
+.g-bar.lateb{box-shadow:0 0 0 2px var(--bad)}
+.g-due{position:absolute;top:6px;width:10px;height:10px;transform:translateX(-5px) rotate(45deg);margin-top:3px;border:2px solid var(--ink);background:var(--panel)}
+.g-due.over{border-color:var(--bad)}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,20,18,.32);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100vw);z-index:21;background:var(--panel);border-left:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.dh{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start;padding-top:calc(14px + env(safe-area-inset-top,0px))}
+.dh h3{margin:0;font-size:17px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dh .sub{margin-top:4px}
+.dh .x{margin-left:auto}
+.db{overflow:auto;padding:4px 18px 30px}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 16px;padding:12px 0}
+.info label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--ink2)}
+.info input,.info select{width:100%}
+.info .ro{font-size:13px;color:var(--ink);padding:6px 0}
+.phase{margin-top:14px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.phase-h{display:flex;gap:10px;align-items:center;padding:8px 12px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.phase-h b{font-size:13px}
+.phase-h .who2{font-size:11.5px;color:var(--ink2)}
+.phase-h .st{margin-left:auto;font-size:11.5px}
+.step{display:grid;grid-template-columns:minmax(120px,1.3fr) 92px 140px 76px 64px minmax(100px,1fr);gap:8px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line2)}
+.step:last-child{border-bottom:0}
+.step.na{opacity:.55}
+.step.na .sl{text-decoration:line-through}
+.step .sl{font-weight:500}
+.step input[type=date]{padding:4px 6px;width:100%}
+.step .base{font-family:var(--mono);font-size:11.5px;color:var(--ink3)}
+.step .diff{font-family:var(--mono);font-size:11.5px}
+.step .done{display:flex;align-items:center;gap:6px}
+.step .done input{width:18px;height:18px;accent-color:var(--ok)}
+.step .by{font-size:11.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis}
+.step.late .sl{color:var(--bad)}
+.step.cur{background:var(--accent-weak)}
+.shift{margin:8px 12px;padding:8px 10px;border-radius:6px;background:var(--warn-bg);color:var(--ink);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{padding:6px 0;border-bottom:1px solid var(--line2);font-size:12.5px;display:flex;gap:10px}
+.hist .tm{font-family:var(--mono);font-size:11px;color:var(--ink3);white-space:nowrap}
+.sec{margin-top:20px;font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:.06em}
+/* modal */
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(640px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;z-index:21;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:18px}
+.modal h3{margin:0 0 4px;font-size:16px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 14px;margin:14px 0}
+.fgrid label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink2)}
+.acts{display:flex;justify-content:flex-end;gap:8px}
+/* sheet */
+.wrap.wide{max-width:none}
+.sheetw{max-height:calc(100vh - 290px)}
+.sheet{width:max-content;font-size:12px}
+.sheet th,.sheet td{padding:0;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);white-space:nowrap}
+.sheet td{height:28px}
+.sheet tr.sp td{padding:0;border:0;background:none}
+.sheet tbody tr{cursor:default}
+.sheet thead th{position:sticky;background:var(--panel2);text-align:center;padding:0 6px;font-size:11.5px;cursor:default;z-index:2}
+.sheet thead tr.h1 th{top:0;height:24px}
+.sheet thead tr.h2 th{top:24px;height:58px;line-height:1.15;white-space:normal;padding:0 3px;font-size:11px}
+.sheet thead tr.h3 th{top:82px;height:20px;padding:0 2px;font-weight:500;color:var(--ink3);font-size:11px}
+.sheet thead th[data-sort]{cursor:pointer}
+.sheet thead th small{display:block;font-weight:400;color:var(--ink3);font-size:10.5px}
+.sheet th.gh{border-bottom:2px solid var(--accent);color:var(--ink);text-align:left}
+.sheet .fz{position:sticky;background:var(--panel);z-index:1;padding:0 8px}
+.sheet thead .fz{z-index:4;background:var(--panel2);top:0}
+.sheet .f1{left:0;min-width:58px;max-width:58px}
+.sheet .f2{left:58px;min-width:170px;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.sheet .f3{left:228px;min-width:84px;max-width:84px;overflow:hidden;text-overflow:ellipsis;border-right:2px solid var(--line)}
+.pnob{border:0;background:none;padding:0;font-family:var(--mono);font-weight:500;color:var(--accent);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px;margin-right:4px}
+.sheet td.ed{background:var(--panel)}
+.sheet td.ro{background:var(--panel2)}
+.sheet td.ro input.cx{color:var(--ink2)}
+.sheet td.okc{background:var(--ok-bg)}
+.sheet td.lt input.cx{color:var(--bad);font-weight:600}
+.sheet td.na input.cx{color:var(--na)}
+.sheet td.cur{border-bottom:2px solid var(--accent)}
+.sheet td.nt{background:var(--line2);color:var(--ink3);text-align:center}
+.sheet td.ck{text-align:center;min-width:24px;width:24px}
+.sheet td.dt{--w:44px}
+.sheet td.dt input.cx{padding:0 3px!important;text-align:center}
+.sheet .rv{width:var(--w,76px);height:27px;line-height:27px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:12px;color:var(--ink2)}
+.sheet td.dt .rv{padding:0 3px;text-align:center}
+.sheet td.lt .rv{color:var(--bad);font-weight:600} .sheet td.na .rv{color:var(--na)}
+.sheet i.cb{display:inline-block;width:13px;height:13px;border:1.5px solid var(--line);border-radius:3px;vertical-align:middle;background:var(--panel)}
+.sheet i.cb.on{background:var(--ok);border-color:var(--ok);opacity:.75;position:relative}
+.sheet i.cb.on::after{content:'';position:absolute;left:3px;top:0;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.sheetw{overflow-anchor:none}
+.sheet tbody tr{contain:style}
+.sheetw{contain:content}
+.sheet thead th small{font-size:10px}
+.sheet td.ck input{width:15px;height:15px;accent-color:var(--ok);margin:0;vertical-align:middle}
+.sheet input.cx:not([type=checkbox]),.sheet select.cx{display:block;width:var(--w,76px);height:27px;border:0;border-radius:0;background:transparent;padding:0 6px;font-family:var(--mono);font-size:12px}
+.sheet select.cx{padding:0 2px;font-family:var(--sans)}
+.sheet .cx:focus{outline:2px solid var(--accent);outline-offset:-2px}
+.sheet td.saving{opacity:.6}
+.sheet td.saved{animation:flash .9s ease-out}
+@keyframes flash{from{background:var(--accent-weak)}}
+.hint{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink2)}
+.hint b{color:var(--ink)}
+.hint i{display:inline-block;width:14px;height:11px;border:1px solid var(--line);vertical-align:-1px;margin-right:4px}
+.shiftbar{position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:8px;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:calc(100vw - 32px)}
+/* v7 */
+.colgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.colgrid fieldset{border:1px solid var(--line);border-radius:6px;padding:6px 10px 8px;margin:0;display:flex;flex-direction:column;gap:3px;min-width:0}
+.colgrid legend{padding:0 4px}
+.modal.wide{width:min(980px,calc(100vw - 32px))}
+.sheet td.fz.inp{padding:0}
+.sheet td.fz.inp.ed{background:var(--panel)} .sheet td.fz.inp.ro{background:var(--panel2)}
+.sheet tr.draft td{background:var(--accent-weak)}
+.sheet tr.draft td.ed{background:var(--panel)}
+.xdraft{border:0;background:none;color:var(--ink3);padding:0 2px;margin-left:2px}
+.xdraft:hover{color:var(--bad)}
+.item img{flex:none}
+/* calendar */
+.cal{position:fixed;z-index:50;display:none;width:232px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:8px;font-size:12px}
+.calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.calh button{border:0;background:none;font-size:16px;width:28px;height:24px;border-radius:5px}
+.calh button:hover,.calg button:hover,.calf button:hover{background:var(--line2)}
+.calw,.calg{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.calw span{color:var(--ink3);font-size:11px;padding:2px 0}
+.calg button{border:0;background:none;height:28px;border-radius:5px;font-family:var(--mono);font-size:12px}
+.calg button.ot{color:var(--ink3);opacity:.6}
+.calg button.td{box-shadow:inset 0 0 0 1px var(--accent)}
+.calg button.sel{background:var(--accent);color:var(--accent-ink)}
+.sun{color:var(--bad)} .sat{color:var(--dt)}
+.calg button.sel.sun,.calg button.sel.sat{color:var(--accent-ink)}
+.calf{display:flex;gap:4px;justify-content:flex-end;margin-top:6px;border-top:1px solid var(--line2);padding-top:6px}
+.calf button{border:1px solid var(--line);background:var(--panel2);border-radius:5px;padding:3px 9px}
+/* period chips */
+.period{display:flex;flex-direction:column;gap:8px}
+.prow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pl{width:34px;font-size:12px;font-weight:600;color:var(--ink2)}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:3px 11px;font-size:12px;font-family:var(--mono)}
+.chip:hover:not(:disabled){border-color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.chip:disabled{opacity:.35;cursor:default}
+/* signal */
+.sig{display:inline-block;width:9px;height:9px;border-radius:50%;margin:0 6px 0 0;vertical-align:0;flex:none}
+.sig-r{background:#E5484D} .sig-y{background:#F0B429} .sig-g{background:#30A46C} .sig-h{background:var(--na)} .sig-n{background:transparent;box-shadow:inset 0 0 0 1.5px var(--na)}
+.seg .sig{margin-right:4px}
+.pcell{display:flex;align-items:center;gap:4px;overflow:hidden;min-width:0}
+.pcell .pnob{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;margin-right:0}
+.pcell .tag,.pcell .sig{flex:none;margin:0}
+/* template view */
+.tpl{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+.tpl table td{cursor:default}
+.tpl tbody tr{cursor:default}
+.tpl tr.off td{color:var(--ink3);text-decoration:line-through}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;box-shadow:var(--shadow);font-size:12.5px;max-width:calc(100vw - 32px)}
+@media (max-width:720px){
+  main{padding:12px}
+  .step{grid-template-columns:1fr 1fr;row-gap:4px}
+  .inbox,.grid2,.tpl{grid-template-columns:1fr}
+  .g-row{grid-template-columns:150px 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* v11 가독성: 시트는 고정폭 글꼴 대신 한글 본문 글꼴 + 숫자 폭 고정 */
+.sheet{font-family:var(--sans);font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink);-webkit-font-smoothing:antialiased}
+.sheet input.cx:not([type=checkbox]),.sheet select.cx,.sheet .rv{font-family:inherit;font-size:13px;letter-spacing:0}
+.sheet .rv{color:var(--ink)}
+.sheet td.ro input.cx{color:var(--ink)}
+.sheet td.dt .rv,.sheet td.dt input.cx{font-size:13px;letter-spacing:-.2px}
+.sheet td.lt .rv,.sheet td.lt input.cx{color:var(--bad);font-weight:700}
+.sheet td.na .rv,.sheet td.na input.cx{color:var(--ink3)}
+.sheet td.ro{background:var(--panel2)}
+.sheet .f3{font-family:inherit!important;font-size:12.5px}
+.pnob{font-family:inherit;font-size:13px;font-weight:600;text-decoration:none}
+.pnob:hover{text-decoration:underline}
+.sheet thead th{font-size:12px;color:var(--ink)}
+.sheet thead th small{font-size:10.5px;color:var(--ink2)}
+.sheet thead tr.h2 th{font-size:11.5px;font-weight:600}
+.sheet thead tr.h3 th{font-size:11px;color:var(--ink2)}
+.sheet .tag{font-size:11px}
+.sheet td{border-bottom-color:var(--line)}
+
+.sheet .f2{left:58px;min-width:205px;max-width:205px}
+.sheet .f3{left:263px;min-width:112px;max-width:112px}
+.sheet td.f3.inp{--w:112px}
+.pcell .tag.urg{padding:0 4px;font-size:10.5px}
+
+/* 일정 칸 너비 통일: 머리글이 칸 너비를 늘리지 않도록 */
+.sheet .hfit{width:0;min-width:100%;overflow:hidden}
+.sheet .hfit.nw{white-space:nowrap;text-overflow:ellipsis}
+.sheet th.sh .hfit{word-break:keep-all;overflow-wrap:anywhere}
+.sheet td.dt{width:46px;min-width:46px;max-width:46px}
+.sheet td.ck{width:24px;min-width:24px;max-width:24px}
+.sheet td.dt .rv,.sheet td.dt input.cx{width:46px!important}
+
+/* resize & reorder */
+.sheet thead th{position:sticky}
+.sheet thead th .rz{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:5}
+.sheet thead th .rz:hover,body.rzing .rz{background:linear-gradient(to right,transparent 2px,var(--accent) 2px,var(--accent) 4px,transparent 4px)}
+body.rzing{cursor:col-resize;user-select:none}
+.sheet th[draggable=true]{cursor:grab}
+.sheet th.drg{opacity:.45}
+.sheet th.dropl{box-shadow:inset 3px 0 0 var(--accent)}
+.tag.rb{background:#FFF1D6;color:#8A5300;flex:none} :root[data-theme=dark] .tag.rb{background:#3A2A0F;color:#F0B429}
+
+/* 표 80% 배율 */
+.sheetw{zoom:.8;max-height:calc((100vh - 300px) / .8)}
+
+.sheet td.nac,.sheet td.nac.ed{background:var(--line2)}
+.sheet td.nac .rv,.sheet td.nac input.cx{color:var(--ink3);font-weight:400}
+.sheet .nadash{color:var(--ink3)}
+
+/* 가로·세로 강조 */
+:root{--hl:rgba(255,190,0,.20);--hlh:rgba(255,200,0,.28);--hlx:rgba(255,190,0,.34)}
+:root[data-theme=dark]{--hl:rgba(255,210,60,.10);--hlh:rgba(255,210,60,.18);--hlx:rgba(255,210,60,.24)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--hl:rgba(255,210,60,.10);--hlh:rgba(255,210,60,.18);--hlx:rgba(255,210,60,.24)}}
+.sheet tbody tr.hr td{background-image:linear-gradient(var(--hl),var(--hl))!important}
+.sheet tbody td.hx{background-image:linear-gradient(var(--hlx),var(--hlx))!important;box-shadow:inset 0 0 0 1px rgba(200,140,0,.55)}
+
+/* 엑셀식 선택 */
+.sheet input.cx.selm{caret-color:transparent;cursor:cell}
+.sheet input.cx.selm::selection{background:transparent;color:inherit}
+.sheet input.cx.edit{caret-color:auto;cursor:text;background:var(--panel)!important;outline:2px solid var(--accent)!important;outline-offset:-2px}
+.sheet td{cursor:cell}
+.sheet td.sela{box-shadow:inset 0 0 0 2px var(--accent)}
+.sheet td.sel{background-image:linear-gradient(rgba(13,92,107,.16),rgba(13,92,107,.16))!important;box-shadow:inset 0 0 0 1px rgba(13,92,107,.35)}
+body.dragsel .sheet{user-select:none}
+.sheetw:focus{outline:none}
+.calg button.hol{font-weight:700}
+.calhol{display:flex;flex-wrap:wrap;gap:2px 10px;margin-top:6px;font-size:11px;color:var(--bad)}
+.calhol b{font-weight:600}
+.sheet th.ih .hfit{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
+.sheet td.calc .rv{text-align:right;padding:0 4px;text-overflow:clip}
+.sheet td.calc .rv.dl{color:var(--bad);font-weight:700}
+.sheet td.calc .rv.dok{color:var(--ok)}
+#histpop .scrim{z-index:30} #histpop .modal{z-index:31}
+.htab td,.htab th{padding:6px 10px;font-size:12.5px;vertical-align:top}
+.htab tbody tr{cursor:default}
+
+/* 생산계획 미정 준비 단계별 대기 */
+.kpis.wait{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (max-width:900px){.kpis.wait{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.kpis.wait{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpis.wait .kpi{padding:9px 12px}.kpis.wait .kpi .v{font-size:22px}
+.kpi[role=button]:hover{border-color:var(--accent)}
+.kpi.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--panel))}
+/* 상단 요약 (짧게) */
+.mini{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mini .k{display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--ink2);font-family:var(--sans);line-height:1.4}
+.mini .k b{font-size:15px;font-weight:600;color:var(--ink)}
+.mini button.k{cursor:pointer}.mini button.k:hover{border-color:var(--accent)}
+.mini .k.warn b{color:var(--warn)}.mini .k.bad b{color:var(--bad)}
+.mini .k.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--panel))}
+.mini .k.muted{background:transparent;border-style:dashed}
+.mini .vsep{width:1px;height:20px;background:var(--line);margin:0 4px}
+.mini .mlab{font-size:11.5px;color:var(--ink3);font-weight:600}
+.lnk{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}
+.hint .help{cursor:help;color:var(--accent);border-bottom:1px dotted var(--accent)}
+.wrap.wide{gap:8px}
+/* 신규 수주 필수값 · 고객 요청 납기 대체 표시 */
+.sheet tr.draft td.need{box-shadow:inset 0 0 0 2px var(--bad)}
+.sheet .rv.ph,.sheet input.cx::placeholder{color:var(--ink3);font-style:italic}
+.newgrp{display:inline-flex;align-items:center;gap:4px}
+.newgrp input{width:48px;height:32px;border:1px solid var(--line);border-radius:6px;padding:0 6px;font:inherit;text-align:right;background:var(--panel);color:var(--ink)}
+/* 전체 글꼴: 맑은 고딕 */
+button,input,select,textarea{font-family:var(--sans)}
+/* 생산계획 미정: 이관된 행은 흐리게 */
+.sheet tr.xf td:not(.fz){background:var(--panel2);color:var(--ink3,#888)}
+.sheet tr.xf .f2 .pnob{opacity:.7}
+/* 완료(체크)된 칸 색은 권한과 무관하게 동일 */
+.sheet td.ro.okc,.sheet td.ed.okc{background:var(--ok-bg)}
+
+.ut-t td,.ut-t th{vertical-align:middle}
+.ut-t th.uc,.ut-t td.uc{text-align:center;min-width:84px}
+.ut-t input.ut{width:100%;min-width:70px;border:1px solid var(--line);border-radius:5px;padding:3px 6px;font:inherit;background:var(--panel)}
+.ut-t input.ut.b{font-weight:700;min-width:110px}
+.ut-t input.ud{width:64px;text-align:center}
+.ut-t .usub{font-size:11px;margin-top:3px;min-height:15px}
+.ut-t td.udone{background:var(--ok-bg)}
+.ut-t td.ulate input,.ut-t td.ulate .late{color:var(--bad);font-weight:700}
+.ut-t tr.uhl td{box-shadow:inset 0 0 0 2px var(--accent)}
+.ut-t tr.uarch td{opacity:.6}
+.lnk{border:0;background:none;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;font-size:11px;padding:0}
+.btn.sm{padding:3px 8px;font-size:12px}.btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
+input.f{border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit;background:var(--panel);color:var(--ink)}
+
+/* 웹앱: 완료/미완료 · 주간계획 칸 */
+.rseg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.rbtn{border:0;background:var(--panel);padding:5px 12px;font-weight:600;color:var(--ink2)}
+.rbtn+.rbtn{border-left:1px solid var(--line)}
+.rbtn.done.on{background:var(--ok);color:#fff}.rbtn.ng.on{background:var(--bad);color:#fff}
+.rbtn:disabled{cursor:default;opacity:.8}
+.drt tr.drng td{background:color-mix(in srgb,var(--bad) 5%,var(--panel))}.drt tr.drok td{background:color-mix(in srgb,var(--ok) 5%,var(--panel))}
+.drrec{width:200px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+.drpc{width:44px;height:24px;border:1px dashed var(--line);border-radius:5px;background:transparent;font-size:11.5px;color:var(--ink3);padding:0}
+.drpc:hover:not(:disabled){border-color:var(--accent)}
+.drpc.on{background:var(--accent-weak);color:var(--accent);border:1px solid var(--accent);font-weight:700}
+.drpc.carry{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);font-weight:700}
+.drpc:disabled{cursor:default}
+.who b{font-size:13px}
+</style>
+<link rel="stylesheet" href="login.css">
+</head><body>
+<div class="app">
+  <header>
+    <div class="brand"><b>SMART 생산일보</b><span>외주(시노드 · 동오정밀) 일일 계획 · 실적</span></div>
+    <nav class="tabs" id="tabs" aria-label="화면"></nav>
+    <span class="conn" id="conn"><i></i><span>연결 중</span></span>
+    <div class="who" id="who"></div>
+  </header>
+  <main id="main"><div class="wrap"><div class="empty">데이터를 불러오는 중입니다…</div></div></main>
+</div>
+<div id="layer"></div>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+/* ================= 생산일보 (외주 Turnkey: 시노드 · 동오정밀) =================
+   호기 = SMART PM 장비 중 생산 구분 '외주(Turnkey)' + 사업장 시노드/동오정밀, 미출하
+   저장: drd/<날짜>_<업체코드> 일보 · drw/<주시작>_<업체코드> 주간계획 · drp/<장비id> 공정률 이력 · drc/main 가중치
+   마감 시 공정률 100% 공정은 공정 완료로 체크 */
+const DR={sub:'day',date:null,site:'ALL',cache:{},subd:new Set(),err:'',text:null,pend:false,addU:null};
+const drWdi=d=>(new Date(d+'T00:00:00').getDay()+6)%7;
+const drWs=d=>addDays(d,-drWdi(d));
+/* 근무일: 평일(공휴일 제외) + 주말 출근 탭에서 '출근'으로 체크한 토·일 (업체별) */
+const drWE=()=>DR.cache['drc/weekend']||{};
+const drIsWE=d=>drWdi(d)>=5;
+const drOn=(site,d)=>!!(drWE()[DR_SC[site]]&&drWE()[DR_SC[site]][d]);
+function drWork(site,d){ if(drIsWE(d)) return site==='ALL'?TK_SITES.some(s=>drOn(s,d)):drOn(site,d); return isWork(d); }
+const drNextS=(site,d)=>{let n=addDays(d,1);for(let i=0;i<40&&!drWork(site,n);i++)n=addDays(n,1);return n};
+const drPrevS=(site,d)=>{let n=addDays(d,-1);for(let i=0;i<40&&!drWork(site,n);i++)n=addDays(n,-1);return n};
+const drNext=d=>drNextS(DR.site,d), drPrev=d=>drPrevS(DR.site,d);
+const drLab=d=>`${+d.slice(5,7)}/${+d.slice(8)}(${DR_WD[drWdi(d)]})`;
+const drPct=v=>v==null||isNaN(v)?'–':Math.round(v)+'%';
+const drClamp=v=>Math.max(0,Math.min(100,v));
+const drRC=v=>v==null?'na':v>=100?'ok':v>=70?'warn':'bad';
+const drChip=v=>`<span class="drr ${drRC(v)}">${drPct(v)}</span>`;
+const drCan=()=>['생산관리','관리자'].includes(S.dept);
+const drCl=o=>JSON.parse(JSON.stringify(o??null));
+const drDayId=(d,s)=>`drd/${d}_${DR_SC[s]}`, drWkId=(w,s)=>`drw/${w}_${DR_SC[s]}`, drPgId=pid=>`drp/${pid}`;
+const drW=()=>{const o=DR.cache['drc/main']&&DR.cache['drc/main'].w;const w={};DR_KEYS.forEach(k=>w[k]=o&&o[k]!=null?+o[k]:DR_W0[k]);return w};
+const drSites=()=>DR.site==='ALL'?TK_SITES:[DR.site];
+function drUnits(site){ return [...S.projects.values()].filter(p=>p.prod==='TK'&&TK_SITES.includes(p.site)&&(site==='ALL'||p.site===site)&&!p._hist&&!derive(p).shipped).sort((a,b)=>String(a.pno).localeCompare(String(b.pno),undefined,{numeric:true})); }
+const drKeys=p=>DR_KEYS.filter(k=>derive(p).keys.includes(k));
+const drDone=(p,k)=>!!(p.s&&p.s[k]&&p.s[k].d);
+const drHist=(p,k)=>{const d=DR.cache[drPgId(p.id)];return d&&d.st&&d.st[k]&&d.st[k].h||null};
+function drAt(p,k,date){ if(drDone(p,k)){ const da=(p.s[k].da||'').slice(0,10); if(!da||da<=date) return 100; } const h=drHist(p,k); if(!h) return 0; let b=null; for(const d in h) if(d<=date&&(b==null||d>b)) b=d; return b==null?0:+h[b]; }
+const drNow=(p,k)=>drDone(p,k)?100:drAt(p,k,'9999-12-31');
+function drUnitRate(p,fn){ const w=drW(); let a=0,b=0; for(const k of drKeys(p)){ if(!(w[k]>0)) continue; a+=w[k]*fn(k); b+=w[k]; } return b?a/b:0; }
+function drRowRate(r){ if(r.act==null||r.act==='') return null; const sp=r.to-r.from; if(sp<=0) return +r.act>=r.to?100:0; return drClamp((r.act-r.from)/sp*100); }
+function drAgg(rows){ let p=0,a=0; for(const r of rows){ if(r.act==null||r.act==='') continue; const sp=r.to-r.from; if(sp<=0) continue; p+=sp; a+=Math.max(0,Math.min(sp,r.act-r.from)); } return p?a/p*100:null; }
+/* 계획일 */
+function drPlanDate(p,k){ const s=p.s||{}; return s[k]&&s[k].p||null; }
+/* 자동 100% 들어갈 날 (주 단위 없음): 계획일. 휴무일이면 바로 앞 근무일. 그날이 이미 지났는데 안 끝났으면(지연) 오늘 */
+function drAutoDay(p,k){ if(drDone(p,k)) return null; const pl=drPlanDate(p,k); if(!pl) return null; const site=p.site;
+  let c=drWork(site,pl)?pl:drPrevS(site,pl);
+  if(c<TODAY) c=drWork(site,TODAY)?TODAY:drNextS(site,TODAY);
+  return c; }
+/* 계획 값 (날짜별): 직접 입력값 우선, 없으면 자동(계획일 = 그날 100%) */
+function drPlanAt(site,p,k,date){ const ws=drWs(date), i=drWdi(date), w=DR.cache[drWkId(ws,site)], r=w&&w.rows&&w.rows[p.id+'__'+k];
+  if(r&&r['d'+i]!=null&&r['d'+i]!=='') return {v:+r['d'+i],auto:false};
+  if(r&&r['x'+i]) return {v:null,auto:false};
+  if(drAutoDay(p,k)===date) return {v:100,auto:true};
+  return {v:null,auto:false}; }
+const drPlanVal=(site,p,k,i)=>drPlanAt(site,p,k,addDays(drWs(DR.date),i));
+function drRows(site,date){ const d=DR.cache[drDayId(date||DR.date,site)]; if(!d||!d.rows) return []; const out=[];
+  for(const [rk,r] of Object.entries(d.rows)){ const [pid,k]=rk.split('__'); const p=S.projects.get(pid); if(!p||!STEPS[k]) continue; out.push({rk,p,k,r}); }
+  out.sort((a,b)=>String(a.p.pno).localeCompare(String(b.p.pno),undefined,{numeric:true})||DR_KEYS.indexOf(a.k)-DR_KEYS.indexOf(b.k)); return out; }
+function drStat(site,date){ const d=DR.cache[drDayId(date||DR.date,site)], rows=drRows(site,date); const ent=rows.filter(x=>x.r.act!=null&&x.r.act!=='').length;
+  return {d,rows,n:rows.length,ent,rate:drAgg(rows.map(x=>x.r)),cr:rows.filter(x=>x.r.cr>0).length,miss:rows.filter(x=>x.r.act!=null&&x.r.act!==''&&+x.r.act<x.r.to).length,st:d&&d.closed?'closed':d&&d.pub?'pub':'none'}; }
+const drSt=s=>({none:'<span class="drs none">미배포</span>',pub:'<span class="drs pub">배포됨 · 실적 입력 중</span>',closed:'<span class="drs closed">마감 완료</span>'})[s];
+
+/* ---- 저장소 ---- */
+/* 구독: 문서마다가 아니라 컬렉션 4개(drd · drw · drp · drc)를 한 번씩 구독 (보기당 구독 64개 제한 대응, 10/22) */
+const DR_COLS=['drd','drw','drp','drc'];
+function drWatch(){ if(!S.db||DR.colsOn) return; DR.colsOn=true; DR.colOk={};
+  for(const c of DR_COLS){ try{ S.db.collection(c).onSnapshot(q=>{ for(const ch of q.docChanges()){ const id=c+'/'+ch.doc.id; DR.cache[id]=ch.type==='removed'?null:(ch.doc.data()||null); } DR.colOk[c]=true; drRefresh(); },e=>console.error(e)); }catch(e){ console.error(e); } } }
+const drHas=id=>(id in DR.cache)||!!(DR.colOk&&DR.colOk[id.split('/')[0]]);
+function drSubAll(){ if(!S.db) return; if(!DR.date) DR.date=isWork(TODAY)?TODAY:drNextS('ALL',TODAY); drWatch(); }
+function drRefresh(){ if(S.tab!=='dr') return; const a=document.activeElement; if(a&&a.closest&&a.closest('#main')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){ DR.pend=true; return; } drRender(); }
+function drRender(){ const a=document.activeElement, id=a&&a.id; render(); if(id){ const e=document.getElementById(id); if(e&&e!==document.activeElement){ try{ e.focus({preventScroll:true}); }catch(_){} } } }
+const DRQ={};
+function drPut(id,body){ DR.cache[id]=body; const p=(DRQ[id]||Promise.resolve()).then(()=>S.db.doc(id).set(body)).catch(e=>{ console.error(e); toast('저장하지 못했습니다: '+(e.message||'연결 상태를 확인해 주세요.')); }); DRQ[id]=p; return p; }
+const drNeed=()=>{ if(!S.db){ toast('저장소에 연결되지 않았습니다.'); return false; } if(!drCan()){ toast('생산일보 입력은 생산관리 · 관리자 코드로 들어온 사람만 할 수 있습니다.'); return false; } return true; };
+
+/* ---- 미마감 확인: 지난 근무일 일보가 배포만 되고 마감되지 않은 날 ---- */
+const DR_LOOK=21;
+const drOpenDoc=x=>!!(x&&x.pub&&!x.closed&&Object.keys(x.rows||{}).some(rk=>S.projects.has(rk.split('__')[0])));
+function drOpenDays(site,before){ const out=[]; for(let i=1;i<=DR_LOOK;i++){ const d=addDays(before,-i), id=drDayId(d,site); if(!drHas(id)){ drWatch(); continue; } if(drOpenDoc(DR.cache[id])) out.push(d); } return out.sort(); }
+async function drGetDoc(id){ if(drHas(id)) return DR.cache[id]??null; try{ const s=await S.db.doc(id).get(); DR.cache[id]=s.exists?s.data():null; }catch(e){ return null; } return DR.cache[id]; }
+async function drOpenDaysSure(site,before){ await Promise.all(Array.from({length:DR_LOOK},(_,i)=>drGetDoc(drDayId(addDays(before,-(i+1)),site)))); return drOpenDays(site,before); }
+const drOpenAll=()=>TK_SITES.map(s=>({s,days:drOpenDays(s,TODAY)})).filter(z=>z.days.length);
+
+/* ---- 동작 ---- */
+async function drGen(site,quiet,force){ if(!drNeed()) return 0; const D=DR.date, w=drWdi(D); if(!drWork(site,D)){ if(!quiet) toast(`${site}: ${drLab(D)}은 휴무일입니다. 주말 출근이면 '주말 출근' 탭에서 먼저 체크하세요.`); return 0; }
+  const id=drDayId(D,site), ex=DR.cache[id], rows=drCl((ex&&ex.rows)||{}); let n=0, pr=0;
+  if(!(ex&&ex.pub)&&!force){ const od=await drOpenDaysSure(site,D); if(od.length){ if(!quiet){ DR.gate={date:D,all:false,sites:[{s:site,days:od}]}; drRender(); } return -1; } }
+  if(!(ex&&ex.closed)) for(const [rk,r] of Object.entries(rows)){ if(drStale(site,rk,r)){ delete rows[rk]; pr++; } }
+  for(const p of drUnits(site)) for(const k of drKeys(p)){ const pv=drPlanAt(site,p,k,D); if(pv.v==null) continue; const rk=p.id+'__'+k, cur=drNow(p,k), r=rows[rk];
+    if(r){ if(r.src==='carry'&&pv.v>r.to){ r.to=pv.v; r.src='carry+plan'; n++; } else if(r.src==='plan'&&(r.act==null||r.act==='')){ r.from=cur; r.to=pv.v; } continue; }
+    if(pv.v<=cur) continue; rows[rk]={from:cur,to:pv.v,act:null,rs:'',memo:'',orig:D,cr:0,src:'plan'}; n++; }
+  if(!Object.keys(rows).length&&!ex){ if(!quiet) toast(`${site}: 이 날짜에 완료 목표인 공정이 없습니다. 주간계획에서 먼저 확인하세요.`); return 0; }
+  const gate=force&&force.rs?{days:force.days||[],rs:force.rs,at:new Date().toISOString(),by:S.me||''}:(ex&&ex.gate);
+  await drPut(id,{...(ex||{}),date:D,site,rows,pub:true,pubAt:new Date().toISOString(),closed:!!(ex&&ex.closed),...(gate?{gate}:{})}); drRender();
+  if(!quiet) toast(`${site} 일보 ${ex&&ex.pub?'다시 반영':'생성 · 업체 모바일에 바로 보입니다'} · 새 계획 ${n}건${pr?` · 이미 끝난 공정 ${pr}건 정리`:''}`); return n; }
+/* 일보 줄 중 정리 대상: SMART PM에서 이미 완료됐거나, 장비가 외주에서 빠졌거나 출하된 줄 (실적이 비었거나 100%일 때만) */
+function drStale(site,rk,r){ const [pid,k]=rk.split('__'), p=S.projects.get(pid); const blank=r.act==null||r.act===''||+r.act>=100;
+  if(!p) return blank; if(!blank) return false; if(drDone(p,k)) return true; return !(p.prod==='TK'&&p.site===site&&!derive(p).shipped); }
+async function drClose(site){ if(!drNeed()) return; const D=DR.date, id=drDayId(D,site), d=drCl(DR.cache[id]); if(!d) return;
+  const valid=Object.entries(d.rows||{}).filter(([rk])=>S.projects.has(rk.split('__')[0]));
+  const miss=valid.filter(([,r])=>r.act==null||r.act==='');
+  if(miss.length){ DR.err=`실적 미입력 ${miss.length}건이 있습니다. 업체 입력을 기다리거나, 직접 완료 / 미완료를 고르거나, [미입력은 미완료로 마감]을 쓰세요.`; drRender(); return; }
+  const noRs=valid.filter(([,r])=>+r.act<r.to&&(!r.rs||(r.rs==='E01'&&!String(r.memo||'').trim())));
+  if(noRs.length&&!DR.err.startsWith('미달 사유')){ DR.err=`미달 사유 확인: 미완료인데 사유 코드가 없거나, E01(기타)인데 비고가 빈 공정이 ${noRs.length}건입니다. 그대로 마감하려면 [실적 마감 → 이관]을 한 번 더 누르세요.`; drRender(); return; }
+  DR.err=''; const N0=drNextS(site,D), by={}; let N=N0;
+  for(let i=0;i<30;i++){ const x=await drGetDoc(drDayId(N,site)); if(!(x&&x.closed)) break; N=drNextS(site,N); }
+  for(const [rk,r] of valid){ const [pid,k]=rk.split('__'); (by[pid]=by[pid]||{})[k]=+r.act; }
+  let doneN=0;
+  for(const [pid,ks] of Object.entries(by)){ const p=S.projects.get(pid), pg=drCl(DR.cache[drPgId(pid)])||{st:{}}; pg.st=pg.st||{};
+    for(const [k,v] of Object.entries(ks)){ const h={...((pg.st[k]&&pg.st[k].h)||{}),[D]:v}; const last=Object.keys(h).sort().at(-1); pg.st[k]={p:h[last],h}; }
+    await drPut(drPgId(pid),pg);
+    const fin=Object.entries(ks).filter(([k,v])=>v>=100&&!drDone(p,k)).map(([k])=>k);
+    if(fin.length){ const patch={s:{}}; fin.forEach(k=>patch.s[k]={d:1,da:new Date(D+'T18:00:00').toISOString(),db:S.me||''});
+      if(await write(p,patch,`${fin.map(k=>STEPS[k].l).join(' · ')} 완료 (생산일보 ${md(D)} 마감)`)) doneN+=fin.length; } }
+  const nid=drDayId(N,site); let nd=await drGetDoc(nid); const had=!!(nd&&nd.pub);
+  nd=drCl(nd)||{date:N,site,rows:{},pub:false,closed:false}; nd.rows=nd.rows||{}; let cn=0, ch=false, upd=0;
+  for(const [rk,r] of valid){ const a=+r.act, ex=nd.rows[rk];
+    if(a<r.to){ cn++; ch=true; const cr=(r.cr||0)+1;
+      if(ex){ Object.assign(ex,{from:a,to:Math.max(ex.to,r.to),cr,orig:r.orig||D,cf:D,prs:r.rs||''}); if(ex.src==='plan') ex.src='carry+plan'; }
+      else nd.rows[rk]={from:a,to:r.to,act:null,rs:'',prs:r.rs||'',memo:'',orig:r.orig||D,cr,cf:D,src:'carry'}; }
+    else if(ex&&ex.cf===D){ ch=true; if(ex.src==='carry') delete nd.rows[rk]; else { ex.src='plan'; ex.cr=0; delete ex.cf; ex.from=a; } }
+    else if(ex&&(ex.act==null||ex.act==='')&&(ex.src==='plan'||ex.src==='manual')){ if(a>=100){ delete nd.rows[rk]; ch=true; upd++; } else if(a>ex.from){ ex.from=a; if(ex.to<=a) delete nd.rows[rk]; ch=true; upd++; } } }
+  if(ch) await drPut(nid,nd);
+  d.closed=true; d.closedAt=new Date().toISOString(); d.carryTo=N; await drPut(id,d); drRender();
+  if(DR.gate) DR.gate=null;
+  toast(`${site} 마감 · ${cn?`${cn}건을 ${drLab(N)}로 이관`:'이관 없음'}${N!==N0?` (${drLab(N0)} 일보가 이미 마감돼 ${drLab(N)}로)`:''}${had&&(cn||upd)?` · 이미 만든 ${drLab(N)} 일보에 반영`:''}${doneN?` · 공정 완료 ${doneN}건 체크`:''}`); }
+/* 실적 없음으로 마감: 입력 안 된 공정을 시작 값(진척 없음)으로 채우고 사유를 붙여 마감 */
+async function drCloseZero(site,rs){ if(!drNeed()) return; const id=drDayId(DR.date,site), d=drCl(DR.cache[id]); if(!d) return;
+  const now=new Date().toISOString(); for(const r of Object.values(d.rows||{})){ if(r.act==null||r.act===''){ r.act=r.from; r.res='ng'; if(r.from<r.to&&!r.rs) r.rs=rs; r.rby=(S.me||'')+' (미입력 마감)'; r.rat=now; } }
+  await drPut(id,d); DR.zero=false; DR.err='미달 사유'; await drClose(site); }
+async function drReopen(site){ if(!drNeed()) return; const id=drDayId(DR.date,site), d=drCl(DR.cache[id]); d.closed=false; await drPut(id,d); drRender(); toast('마감을 취소했습니다. 이미 체크된 공정 완료는 그대로 둡니다.'); }
+function drSetRow(site,rk,patch){ if(!drNeed()) return; const id=drDayId(DR.date,site), d=drCl(DR.cache[id]); if(!d||!d.rows[rk]) return; Object.assign(d.rows[rk],patch); drPut(id,d); }
+/* 실적(완료/미완료 · 사유 코드 · 만회 계획 · 비고): 업체와 같은 길(report)로 저장 → 입력자 · 시각이 서버에서 찍힘 */
+async function drReport(site,rk,patch){ if(!drNeed()) return; const id=drDayId(DR.date,site), d=DR.cache[id], r=d&&d.rows&&d.rows[rk]; if(!r) return;
+  const res=patch.res!==undefined?patch.res:(rowRes(r)||'');
+  if(!res&&patch.res===undefined&&(patch.rs!==undefined||patch.rec!==undefined)){ toast('먼저 완료 / 미완료를 고르세요'); return; }
+  const body={id:id.slice(4),rk,res,rs:patch.rs!==undefined?patch.rs:(r.rs||''),rec:patch.rec!==undefined?patch.rec:(r.rec||''),memo:patch.memo!==undefined?patch.memo:(r.memo||'')};
+  if(res) r.res=res; else delete r.res; r.act=res==='done'?100:res==='ng'?r.from:null; if(res==='ng'){ r.rs=body.rs; r.rec=body.rec; } else { r.rs=''; r.rec=''; } r.memo=body.memo;
+  if(DR.err.startsWith('실적 미입력')&&res) DR.err='';
+  drRender();
+  try{ await SDR.report(body); }catch(e){ toast('저장하지 못했습니다: '+e.message); } }
+function drSavePlan(site,rk,date,v){ if(!drNeed()) return; const ws=drWs(date), i=drWdi(date), id=drWkId(ws,site), w=drCl(DR.cache[id])||{week:ws,site,rows:{}}; w.rows=w.rows||{}; const r=w.rows[rk]=w.rows[rk]||{};
+  delete r['x'+i]; if(v===''||v==null){ delete r['d'+i]; const [pid,k]=rk.split('__'), p=S.projects.get(pid); if(p&&drAutoDay(p,k)===date) r['x'+i]=1; } else r['d'+i]=drClamp(+v);
+  if(!Object.keys(r).length) delete w.rows[rk]; drPut(id,w); }
+async function drAdd(site){ if(!drNeed()) return; const pid=$('#dr-au').value, k=$('#dr-ak')&&$('#dr-ak').value, t=100; if(!pid||!k){ toast('추가할 공정이 없습니다'); return; }
+  const p=S.projects.get(pid), cur=drNow(p,k); if(t<=cur){ toast(`목표는 현재 공정률(${drPct(cur)})보다 커야 합니다`); return; }
+  const id=drDayId(DR.date,site), d=drCl(DR.cache[id])||{date:DR.date,site,rows:{},pub:true,closed:false}; d.rows=d.rows||{}; const rk=pid+'__'+k;
+  if(d.rows[rk]){ toast('이미 일보에 있는 공정입니다'); return; }
+  d.rows[rk]={from:cur,to:t,act:null,rs:'',memo:'',orig:DR.date,cr:0,src:'manual'}; if(!d.pubAt){ d.pub=true; d.pubAt=new Date().toISOString(); }
+  await drPut(id,d); drRender(); toast(`${p.pno} ${STEPS[k].l} 추가`); }
+async function drDel(site,rk){ if(!drNeed()) return; const id=drDayId(DR.date,site), d=drCl(DR.cache[id]); delete d.rows[rk]; await drPut(id,d); drRender(); }
+function drSaveW(k,v){ if(!drNeed()) return; const c=drCl(DR.cache['drc/main'])||{}; c.w={...drW(),[k]:Math.max(0,+v||0)}; drPut('drc/main',c); drRender(); }
+
+/* ---- 문구 ---- */
+function drLine({p,k,r},i){ const res=rowRes(r); let l=`${i+1}) ${p.pno} ${STEPS[k].l}`; if(r.cr>0) l+=` [이관${r.cr}]`;
+  if(res==='done') l+=' 완료'; else if(res==='ng') l+=` 미완료${r.rs?' / '+rsLabel(r.rs):''}${r.rec?' / '+r.rec:''}`; if(r.memo) l+=` / ${String(r.memo).trim().replace(/\s*\n\s*/g,' · ')}`; return l; }
+function drText(sites){ const out=[]; for(const s of sites){ const st=drStat(s); if(!st.n) continue;
+  out.push(`[생산일보] ${drLab(DR.date)} ${s}`,`완료 목표 ${st.n}건${st.cr?` · 전일 이관 ${st.cr}건`:''}${st.ent?` · 완료 ${st.ent-st.miss} · 미완료 ${st.miss}`:''}${st.st==='closed'?' · 마감':''}`); st.rows.forEach((x,i)=>out.push(drLine(x,i))); out.push(''); }
+  return out.join('\n').trim()||'이 날짜에 배포할 일보가 없습니다.'; }
+function drWeekData(){ const ws=drWs(DR.date), we=addDays(ws,6), endD=we<TODAY?we:TODAY;
+  const sum=drSites().map(s=>{ const rows=[]; let days=0; for(let i=0;i<7;i++){ const d=DR.cache[drDayId(addDays(ws,i),s)]; if(!d||!d.closed) continue; days++; for(const [rk,r] of Object.entries(d.rows||{})) if(S.projects.has(rk.split('__')[0])) rows.push({...r,rk}); }
+    const rs={}; rows.filter(r=>+r.act<r.to).forEach(r=>{ const k=r.rs?rsLabel(r.rs):'사유 미입력'; rs[k]=(rs[k]||0)+1; }); const ng=rows.filter(r=>+r.act<r.to);
+    return {s,days,n:rows.length,rate:drAgg(rows),carry:ng.length,rs,rows,cA:ng.filter(r=>/^A/.test(r.rs||'')).length,cC:ng.filter(r=>/^C/.test(r.rs||'')).length}; });
+  const units=[]; for(const s of drSites()) for(const p of drUnits(s)){ const b=addDays(ws,-1), start=drUnitRate(p,k=>drAt(p,k,b)), end=drUnitRate(p,k=>drAt(p,k,endD)); let has=false;
+    const tgt=drUnitRate(p,k=>{ const s0=drAt(p,k,b); let m=s0; for(let i=0;i<7;i++){ const pv=drPlanVal(s,p,k,i); if(pv.v!=null){ has=true; m=Math.max(m,pv.v); } } return m; });
+    if(!has&&Math.abs(end-start)<0.01) continue; const sm=sum.find(z=>z.s===s), ur=sm.rows.filter(r=>r.rk.startsWith(p.id+'__'));
+    const rs={}; ur.filter(r=>+r.act<r.to).forEach(r=>{ const k=r.rs?rsLabel(r.rs):'사유 미입력'; rs[k]=(rs[k]||0)+1; });
+    units.push({p,s,start,end,tgt,rate:tgt-start>0.01?drClamp((end-start)/(tgt-start)*100):null,carry:ur.filter(r=>+r.act<r.to).length,rs:Object.entries(rs).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${k} ${n}`).join(', ')}); }
+  return {ws,sum,units}; }
+function drWeekText(){ const W=drWeekData(), out=[`[주보] 외주 ${drLab(W.ws)} ~ ${drLab(addDays(W.ws,6))}`]; W.sum.forEach(z=>{ if(z.n) out.push(`· ${z.s}: 달성률 ${drPct(z.rate)} (계획 ${z.n}건, 이관 ${z.carry}건)`); }); out.push('');
+  W.units.forEach(x=>out.push(`${x.p.pno} ${drPct(x.start)} → ${drPct(x.end)} (목표 ${drPct(x.tgt)}, 달성 ${drPct(x.rate)})${x.rs?' · '+x.rs:''}`)); return out.join('\n'); }
+
+/* ---- 화면 ---- */
+function vDr(){ drSubAll(); const D=DR.date, ed=drCan();
+  const subs=[['day','일보'],['plan','주간계획'],['week','주보'],['wkend','주말 출근'],['w','공정 가중치']];
+  const ctl=`<div class="toolbar"><div class="seg" role="group" aria-label="생산일보 화면">${subs.map(([v,l])=>`<button type="button" data-dr="sub" data-v="${v}" class="${DR.sub===v?'on':''}">${l}</button>`).join('')}</div>
+   ${DR.sub==='w'||DR.sub==='wkend'?'':`<span class="drdate"><button class="btn" type="button" data-dr="prev" aria-label="이전 근무일">◀</button><b>${drLab(D)}</b><button class="btn" type="button" data-dr="next" aria-label="다음 근무일">▶</button><input type="date" id="dr-date" data-drf="date" value="${D}" aria-label="날짜 선택">${D!==TODAY?`<button class="btn" type="button" data-dr="today">오늘</button>`:''}</span>
+   <div class="seg" role="group" aria-label="외주업체">${[['ALL','전체'],...TK_SITES.map(s=>[s,s])].map(([v,l])=>`<button type="button" data-dr="site" data-v="${v}" class="${DR.site===v?'on':''}">${l}</button>`).join('')}</div>`}</div>`;
+  const intro=`<div class="note"><b>SMART 생산일보</b> · <b>장비 등록</b> 탭에 올린 외주 장비(시노드 · 동오정밀)의 외주 공정(자재 입고 ~ 1차검수(DRY))을 하루 단위로 관리합니다. 장비 등록의 계획일(= 완료 목표일)은 주간계획에 자동으로 들어가고, 일보를 만들면 업체 모바일에 보입니다. 업체가 '완료'로 입력한 공정은 마감할 때 장비 등록에 완료로 표시됩니다.${ed?'':' <b>입력은 생산관리 · 관리자만</b> 할 수 있습니다.'}</div>`;
+  const units=drUnits('ALL');
+  if(!units.length) return ctl+intro+`<div class="empty"><b>외주 장비가 없습니다</b><br><b>장비 등록</b> 탭에서 외주 장비와 공정 계획일을 먼저 넣어 주세요.</div>`;
+  const body={day:drVDay,plan:drVPlan,week:drVWeek,wkend:drVWkend,w:drVW}[DR.sub]();
+  const txt=DR.text!=null?`<div class="card"><div class="toolbar"><b>메신저용 문구</b><span style="margin-left:auto"></span><button class="btn" type="button" data-dr="copytxt">복사</button><button class="btn" type="button" data-dr="closetxt">닫기</button></div><textarea id="dr-txt" readonly style="width:100%;min-height:200px">${esc(DR.text)}</textarea></div>`:'';
+  return ctl+intro+txt+body; }
+function drOpenBtns(list){ return list.flatMap(z=>z.days.map(d=>`<button class="btn" type="button" data-dr="goopen" data-v="${z.s}|${d}">${z.s} ${drLab(d)}</button>`)).join(''); }
+function drGateCard(){ const g=DR.gate; if(!g||g.date!==DR.date) return ''; const n=g.sites.reduce((a,z)=>a+z.days.length,0);
+  return `<div class="card drgate"><b>먼저 마감할 일보가 있습니다 (${n}건)</b>
+   <div class="sub" style="margin:4px 0 8px">${g.sites.map(z=>`${z.s} ${z.days.map(drLab).join(', ')}`).join(' · ')} 일보가 마감되지 않았습니다. 먼저 마감하면 그날 실적이 장비 등록에 들어가고 미달분이 ${drLab(DR.date)} 일보로 이어집니다. 그대로 만들면 ${drLab(DR.date)} 일보의 시작 값이 그날 실적을 반영하지 못합니다. 나중에라도 마감하면 미달분은 이 일보로 다시 이관됩니다.</div>
+   <div class="toolbar" style="margin:0">${drOpenBtns(g.sites).replace(/class="btn"/g,'class="btn pri"')}<span style="flex:1"></span>
+   <input id="dr-gate-rs" type="text" placeholder="그래도 만드는 사유 (예: 업체 실적 미회신)" style="min-width:240px" aria-label="그래도 만드는 사유"><button class="btn" type="button" data-dr="gateforce">그래도 만들기</button><button class="btn" type="button" data-dr="gatecancel">취소</button></div></div>`; }
+function drOpenBar(){ if(DR.gate&&DR.gate.date===DR.date) return ''; const op=drOpenAll(); if(!op.length) return ''; const n=op.reduce((a,z)=>a+z.days.length,0);
+  return `<div class="note drwarn"><b>마감 안 된 일보 ${n}건</b> · 마감해야 실적이 장비 등록에 들어가고 미달분이 다음 근무일로 이관됩니다. <span class="toolbar" style="display:inline-flex;margin:0 0 0 6px">${drOpenBtns(op)}</span></div>`; }
+function drVDay(){ const D=DR.date, ed=drCan(), top=drGateCard()+drOpenBar();
+  if(DR.site==='ALL'){ const all=TK_SITES.map(s=>({s,st:drStat(s)})), rows=all.flatMap(z=>z.st.rows.map(r=>r.r));
+    return top+`<div class="toolbar"><h2 style="margin:0">${drLab(D)} 생산일보 · 전체</h2><span style="margin-left:auto"></span>${ed?`<button class="btn" type="button" data-dr="genall">전체 일보 생성</button>`:''}<button class="btn" type="button" data-dr="text" data-v="ALL">메신저용 문구</button></div>
+    <div class="drk"><span>계획 <b>${rows.length}</b>건</span><span class="${drRC(drAgg(rows))}">완료율 <b>${drPct(drAgg(rows))}</b></span><span>마감 <b>${all.filter(z=>z.st.st==='closed').length}</b>/${TK_SITES.length}</span></div>
+    <div class="drcards">${all.map(({s,st})=>`<button type="button" class="card drcard" data-dr="site" data-v="${s}"><div class="toolbar" style="margin:0"><span class="tag ${siteOf({site:s}).c}">${s}</span>${drSt(st.st)}${(()=>{ const o=drOpenDays(s,TODAY).length; return o?`<span class="drs open">미마감 ${o}</span>`:''; })()}</div><div class="drbig ${drRC(st.rate)}">${drPct(st.rate)}</div><div class="muted">계획 <b>${st.n}</b> · 입력 <b>${st.ent}/${st.n}</b> · 미완료 <b>${st.miss}</b> · 이관 <b>${st.cr}</b> · 장비 ${drUnits(s).length}대</div></button>`).join('')}</div>
+    ${!rows.length?`<div class="note">${drLab(D)} 일보가 아직 없습니다. <b>주간계획</b> 탭에서 완료 목표일을 확인한 뒤 <b>전체 일보 생성</b>을 누르세요. 목표일이 오늘이거나 이미 지난 외주 공정은 오늘 일보에 자동으로 들어갑니다.</div>`:''}
+    <h3>외주 장비 현황</h3>${drStatusTable()}`; }
+function drStatusTable(){ const us=drUnits('ALL');
+  return `<div class="drtw"><table class="drt"><thead><tr><th>외주업체</th><th>PROJECT NO.</th><th>TYPE</th><th>현재 외주 공정</th><th>계획일</th><th class="n">외주 공정률</th><th class="n">남은 외주 공정</th></tr></thead><tbody>${us.map(p=>{ const ks=drKeys(p), rest=ks.filter(k=>!drDone(p,k)), k=rest[0], pl=k&&drPlanDate(p,k), late=pl&&pl<TODAY;
+    return `<tr><td><span class="tag ${siteOf(p).c}">${esc(p.site)}</span></td><td><button type="button" class="drlnk" data-open="${p.id}">${esc(p.pno)}</button></td><td class="muted">${esc(p.type||'')}</td><td>${k?esc(STEPS[k].l)+(drNow(p,k)>0?` <span class="muted">${drPct(drNow(p,k))}</span>`:''):'<span class="tag shipped">외주 공정 완료</span>'}</td><td>${!pl?'<span class="muted">–</span>':late?`<span style="color:var(--bad);font-weight:700">${md(pl)} 지연</span>`:md(pl)}</td><td class="n">${drPct(drUnitRate(p,x=>drNow(p,x)))}</td><td class="n">${rest.length}</td></tr>`; }).join('')}</tbody></table></div>`; }
+  const s=DR.site, st=drStat(s), closed=st.st==='closed', can=ed&&!closed, us=drUnits(s);
+  const gl=st.d&&st.d.gate?`<div class="note drwarn">${st.d.gate.days.map(drLab).join(', ')} 일보가 마감되지 않은 상태에서 만든 일보입니다 · 사유: ${esc(st.d.gate.rs)}${st.d.gate.by?` · ${esc(st.d.gate.by)}`:''}</div>`:'';
+  const zero=can&&st.n&&DR.zero?`<div class="card drgate"><b>미입력은 미완료로 마감</b><div class="sub" style="margin:4px 0 8px">완료 / 미완료가 비어 있는 공정을 모두 <b>미완료</b>로 하고 아래 사유 코드를 붙여 마감합니다. 이미 입력된 실적은 그대로 둡니다. 미완료 공정은 다음 근무일로 이관됩니다.</div><div class="toolbar" style="margin:0"><select id="dr-zero-rs" aria-label="사유">${RS.map(x=>`<option value="${x.c}">${x.c} ${esc(x.l)}</option>`).join('')}</select><button class="btn pri" type="button" data-dr="zerogo">이대로 마감</button><button class="btn" type="button" data-dr="zerocancel">취소</button></div></div>`:'';
+  const head=top+`<div class="toolbar"><h2 style="margin:0">${drLab(D)} 생산일보 · ${s} ${drSt(st.st)}</h2><span style="margin-left:auto"></span>
+    ${!ed?'':closed?`<button class="btn" type="button" data-dr="reopen">마감 취소</button>`:`<button class="btn" type="button" data-dr="gen">${st.d&&st.d.pub?'계획 다시 반영':'주간계획에서 일보 생성'}</button>${st.n?`<button class="btn" type="button" data-dr="zero">미입력은 미완료로 마감</button><button class="btn pri" type="button" data-dr="close">실적 마감 → 이관</button>`:''}`}
+    <button class="btn" type="button" data-dr="text" data-v="${s}">메신저용 문구</button></div>
+    <div class="sub">아침에 일보를 만들면 업체 모바일에 바로 보입니다. 업체 현장 책임자가 저녁까지 공정마다 <b>완료 / 미완료</b>를 입력하고, 생산관리팀은 다음 날 오전에 확인 후 마감합니다. 미완료 공정은 다음 근무일(${drLab(drNext(D))})로 이관됩니다.</div>${gl}${zero}
+    <div class="drk"><span>완료 목표 <b>${st.n}</b>건</span><span class="${st.ent<st.n?'warn':''}">입력 <b>${st.ent}/${st.n}</b></span><span class="ok">완료 <b>${st.ent-st.miss}</b></span><span class="${st.miss?'bad':''}">미완료 <b>${st.miss}</b></span><span class="${st.cr?'warn':''}">전일 이관 <b>${st.cr}</b>건</span></div>${(()=>{ if(closed||!st.d) return ''; const k=Object.entries(st.d.rows||{}).filter(([rk,r])=>drStale(s,rk,r)).length; return k?`<div class="note">장비 등록에서 이미 끝났거나 외주에서 빠진 공정 <b>${k}건</b>이 이 일보에 남아 있습니다. ${ed?'<b>계획 다시 반영</b>을 누르면 정리됩니다.':''}</div>`:''; })()}${DR.err?`<div class="note" style="border-color:var(--bad);color:var(--bad)">${esc(DR.err)}</div>`:''}`;
+  const add=can&&us.length?(()=>{ const su=us.find(p=>p.id===DR.addU)||us[0]; return `<div class="card"><b>계획에 없던 작업 추가</b><div class="toolbar" style="margin:6px 0 0"><select id="dr-au" data-drf="addu" aria-label="장비">${us.map(p=>`<option value="${p.id}" ${p.id===su.id?'selected':''}>${esc(p.pno)}</option>`).join('')}</select><select id="dr-ak" aria-label="공정">${drKeys(su).filter(k=>drNow(su,k)<100).map(k=>`<option value="${k}">${esc(STEPS[k].l)}</option>`).join('')}</select> 오늘 완료 목표로 <button class="btn" type="button" data-dr="add">추가</button></div></div>`; })():'';
+  if(!st.n&&!drWork(s,D)) return head+`<div class="empty"><b>${drLab(D)}은 ${s} 휴무일입니다</b><br>주말에 출근하면 <b>주말 출근</b> 탭에서 ${s}의 이 날짜를 '출근'으로 체크하세요.</div>`;
+  if(!st.n) return head+`<div class="empty"><b>${drLab(D)} 일보가 비어 있습니다</b><br>주간계획 탭에서 완료 목표일을 확인한 뒤 <b>주간계획에서 일보 생성</b>을 누르세요.</div>`+add;
+  const tb=st.rows.map(({rk,p,k,r},i)=>{ const res=rowRes(r);
+    const src=(r.cr>0?`<span class="tag ${r.cr>=3?'drcr3':'drcr'}" title="최초 계획일 ${esc(r.orig||'')}">이관 ${r.cr}회</span>`:r.src==='manual'?'<span class="tag">추가</span>':'<span class="muted">계획</span>')+(r.cr>0?`<div class="muted" style="font-size:11px">최초 ${md(r.orig||'')}${r.prs?' · 전일 '+esc(r.prs):''}</div>`:'');
+    const rb=(v,l)=>`<button type="button" class="rbtn ${v} ${res===v?'on':''}" data-dr="res" data-v="${rk}|${v}" ${can?'':'disabled'} aria-pressed="${res===v}">${l}</button>`;
+    return `<tr class="${res==='ng'?'drng':res==='done'?'drok':''}"><td class="muted">${i+1}</td><td><button type="button" class="drlnk" data-open="${p.id}">${esc(p.pno)}</button></td><td class="muted">${esc(p.type||'')}</td><td><b>${esc(STEPS[k].l)}</b>${drDone(p,k)?' <span class="tag shipped">공정 완료</span>':''}</td><td>${src}</td>
+     <td><span class="rseg">${rb('done','완료')}${rb('ng','미완료')}</span></td>
+     <td><select id="dr-r-${rk}" data-drf="rs" data-rk="${rk}" ${can&&res==='ng'?'':'disabled'} aria-label="미달 사유">${rsOpts(r.rs,res==='ng'?'사유 선택':'–')}</select>${r.rs&&!rsOf(r.rs)?`<div class="muted" style="font-size:11px">${esc(r.rs)}</div>`:''}${lateRs(r,D)?'<div><span class="tag drcr" title="회사 사유(C)를 일보 날짜보다 늦게 입력했습니다">늦은 입력</span></div>':''}</td>
+     <td><input class="drrec" id="dr-c-${rk}" data-drf="rec" data-rk="${rk}" value="${esc(r.rec||'')}" placeholder="${res==='ng'?'만회 계획 한 줄':''}" ${can&&res==='ng'?'':'disabled'} aria-label="만회 계획"></td>
+     <td><textarea class="drmemo" id="dr-m-${rk}" data-drf="memo" data-rk="${rk}" rows="2" ${can?'':'disabled'} placeholder="${r.rs==='E01'?'E01은 내용 필수':'비고'}" aria-label="비고">${esc(r.memo||'')}</textarea></td>
+     <td class="muted" style="font-size:11.5px">${r.rby?`${esc(r.rby)}<br>${hm(r.rat)}`:'–'}</td>
+     <td>${can?`<button class="btn sm" type="button" data-dr="del" data-v="${rk}">삭제</button>`:''}</td></tr>`; }).join('');
+  return head+`<div class="drtw"><table class="drt"><thead><tr><th>No</th><th>PROJECT NO.</th><th>TYPE</th><th>공정</th><th>구분</th><th>결과</th><th>미달 사유</th><th>만회 계획</th><th>비고</th><th>입력</th><th></th></tr></thead><tbody>${tb}</tbody></table></div>
+   <div class="muted" style="font-size:12px">이관 1~2회 주황 · 3회 이상 빨강(주간 점검 안건) · 완료로 마감하면 장비 등록에 공정 완료로 체크됩니다 · 회사 사유(C)는 그날 입력한 것만 인정합니다(늦게 넣으면 '늦은 입력' 표시).</div>`+add; }
+function drVPlan(){ const ps=drWs(DR.date), span=DR.span||3, days=Array.from({length:span*7},(_,i)=>addDays(ps,i)), ed=drCan();
+  let body='', cnt=0, auto=0, car=0;
+  const cell=(s,p,k,d)=>{ const rk=p.id+'__'+k, pv=drPlanAt(s,p,k,d); if(pv.auto) auto++;
+    const dd=DR.cache[drDayId(d,s)], dr=dd&&dd.rows&&dd.rows[rk], cr=dr&&/carry/.test(dr.src||'');
+    if(cr) car++;
+    const work=drWork(s,d), we=drIsWE(d)&&!work, cls=`c ${!work?'drhol':''} ${d===TODAY?'drtc':''} ${drWdi(d)===0?'drwk0':''}`;
+    if(!work&&pv.v==null&&!cr) return `<td class="${cls}"><span class="muted" style="font-size:11px">${we?'':'휴무'}</span></td>`;
+    const tip=cr?`이관 ${dr.cr}회 (${md(dr.cf||'')} 일보에서 넘어옴)`:pv.v!=null?(pv.auto?'완료 목표일':`직접 입력 ${pv.v}%`):(ed?'누르면 이 날을 완료 목표일로 정합니다':'');
+    return `<td class="${cls}"><button type="button" class="drpc ${pv.v!=null?'on':''} ${cr&&pv.v==null?'carry':''}" data-dr="pset" data-v="${rk}|${d}|${esc(s)}" ${ed?'':'disabled'} title="${esc(tip)}" aria-label="${esc(p.pno+' '+STEPS[k].l)} ${drLab(d)}">${pv.v!=null?(pv.v>=100?'완료':pv.v+'%'):cr?'이관':''}</button></td>`; };
+  for(const s of drSites()) for(const p of drUnits(s)){ const ks=drKeys(p).filter(k=>drNow(p,k)<100); if(!ks.length) continue;
+    body+=`<tr class="drg"><td class="drs1"><button type="button" class="drlnk" data-open="${p.id}">${esc(p.pno)}</button> <span class="tag ${siteOf(p).c}">${esc(p.site)}</span><div class="muted" style="font-weight:400;font-size:11.5px">${esc(p.type||'')}</div></td><td></td><td class="n">${drPct(drUnitRate(p,k=>drNow(p,k)))}</td><td colspan="${days.length}"></td></tr>`;
+    for(const k of ks){ const pl=drPlanDate(p,k); cnt++;
+      body+=`<tr><td class="drs1 drstep">${esc(STEPS[k].l)}</td><td class="muted">${!pl?'–':pl<TODAY?`<span style="color:var(--bad);font-weight:700" title="계획일이 지났는데 완료되지 않음 — 오늘 칸에 자동으로 넣었습니다">${md(pl)} 지연</span>`:md(pl)}</td><td class="n">${drPct(drNow(p,k))}</td>${days.map(d=>cell(s,p,k,d)).join('')}</tr>`; } }
+  const wkHead=Array.from({length:span},(_,w)=>{ const a=addDays(ps,w*7); return `<th class="c drwk0" colspan="7">${md(a)} ~ ${md(addDays(a,6))}${a===drWs(TODAY)?' · 이번 주':''}</th>`; }).join('');
+  return `<div class="toolbar"><h2 style="margin:0">주간계획 · ${drLab(ps)} ~ ${drLab(days.at(-1))} · ${DR.site==='ALL'?'전체':DR.site}</h2><span style="margin-left:auto"></span>
+    <button class="btn" type="button" data-dr="pw" data-v="-7">◀ 1주</button><button class="btn" type="button" data-dr="pw" data-v="7">1주 ▶</button>
+    <div class="seg" role="group" aria-label="기간">${[2,3,4].map(n=>`<button type="button" data-dr="span" data-v="${n}" class="${span===n?'on':''}">${n}주</button>`).join('')}</div></div>
+   <div class="sub">공정이 <b>끝나는 날에만</b> '완료'가 들어갑니다(업무지침 4장). <b>빈 칸을 누르면</b> 그날이 그 공정의 완료 목표일이 됩니다(장비 등록의 계획일도 같이 바뀜). <span class="drauto">파란 칸</span> = 완료 목표일, <span class="drcarry">주황 칸</span> = 전날 미완료로 넘어온 공정(이관). 목표일이 지났는데 안 끝난 공정은 <b>오늘</b> 칸으로 옮겨 보입니다. 목표일을 지우려면 장비 등록에서 계획일을 비우세요.</div>
+   <div class="drk"><span>표시 공정 <b>${cnt}</b>건</span><span>완료 목표 <b>${auto}</b>칸</span><span>이관 <b>${car}</b>칸</span></div>
+   ${body?`<div class="drtw"><table class="drt drplan"><thead><tr><th class="drs1"></th><th></th><th></th>${wkHead}</tr><tr><th class="drs1">장비 · 공정</th><th>계획일</th><th class="n">현재</th>${days.map(d=>`<th class="c ${!drWork(DR.site,d)?'drhol':''} ${d===TODAY?'drtoday':''} ${drWdi(d)===0?'drwk0':''}">${DR_WD[drWdi(d)]}<br>${+d.slice(5,7)}/${+d.slice(8)}${offName(d)?'<br><small>'+esc(offName(d))+'</small>':''}${drIsWE(d)&&TK_SITES.some(x=>drOn(x,d))?`<br><small>${TK_SITES.filter(x=>drOn(x,d)).join('·')} 출근</small>`:''}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`:'<div class="empty">진행할 외주 공정이 없습니다.</div>'}`; }
+function drVWeek(){ const W=drWeekData(), all=W.sum.flatMap(z=>z.rows), tot=drAgg(all);
+  return `<div class="toolbar"><h2 style="margin:0">주보 · ${drLab(W.ws)} ~ ${drLab(addDays(W.ws,6))} · ${DR.site==='ALL'?'전체':DR.site}</h2><span style="margin-left:auto"></span><button class="btn" type="button" data-dr="wtext">메신저용 문구</button></div>
+   <div class="sub">마감된 일보만 집계합니다. 날짜 화살표로 다른 주를 볼 수 있습니다.</div>
+   <div class="drk"><span class="${drRC(tot)}">주간 완료율 <b>${drPct(tot)}</b></span><span>완료 목표 <b>${all.length}</b>건</span><span>미완료(이관) <b>${all.filter(r=>+r.act<r.to).length}</b>건</span></div>
+   <div class="drtw"><table class="drt"><thead><tr><th>외주업체</th><th class="n">마감일수</th><th class="n">계획 공정</th><th>완료율</th><th class="n">미완료(이관)</th><th class="n">업체 사유 A</th><th class="n">회사 사유 C</th><th>미달 사유</th></tr></thead><tbody>${W.sum.map(z=>`<tr><td><span class="tag ${siteOf({site:z.s}).c}">${z.s}</span></td><td class="n">${z.days}</td><td class="n">${z.n}</td><td>${drChip(z.rate)}</td><td class="n">${z.carry}</td><td class="n">${z.cA}</td><td class="n">${z.cC}</td><td class="muted">${esc(Object.entries(z.rs).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${k} ${n}`).join(', '))}</td></tr>`).join('')}</tbody></table></div>
+   ${drCarry3(W.ws)}
+   <h3>장비별 주간 실적</h3>${W.units.length?`<div class="drtw"><table class="drt"><thead><tr><th>외주업체</th><th>PROJECT NO.</th><th>TYPE</th><th class="n">주초</th><th class="n">주간 목표</th><th class="n">현재</th><th>달성률</th><th class="n">이관</th><th>미달 사유</th></tr></thead><tbody>${W.units.map(x=>`<tr><td><span class="tag ${siteOf(x.p).c}">${esc(x.s)}</span></td><td><button type="button" class="drlnk" data-open="${x.p.id}">${esc(x.p.pno)}</button></td><td class="muted">${esc(x.p.type||'')}</td><td class="n">${drPct(x.start)}</td><td class="n">${drPct(x.tgt)}</td><td class="n"><b>${drPct(x.end)}</b></td><td>${drChip(x.rate)}</td><td class="n">${x.carry||''}</td><td class="muted">${esc(x.rs)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">이번 주 계획이나 실적이 있는 장비가 없습니다.</div>'}
+   <div class="muted" style="font-size:12px">장비 공정률 = 공정별 가중치 × 공정률 · 주간 달성률 = (현재 − 주초) ÷ (주간 목표 − 주초)</div>`; }
+/* 주간 점검 안건: 이번 주 일보에서 3회 이상 이관된 공정 (업무지침 7장) */
+function drCarry3(ws){ const m={}; for(const s of drSites()) for(let i=0;i<7;i++){ const d=addDays(ws,i), x=DR.cache[drDayId(d,s)]; if(!x||!x.rows) continue;
+    for(const [rk,r] of Object.entries(x.rows)){ if((r.cr||0)<3) continue; const [pid,k]=rk.split('__'), p=S.projects.get(pid); if(!p) continue; if(!m[rk]||m[rk].r.cr<=r.cr) m[rk]={p,k,r,d,s}; } }
+  const L=Object.values(m).sort((a,b)=>b.r.cr-a.r.cr); if(!L.length) return '';
+  return `<div class="card" style="border-color:var(--bad)"><h3>주간 점검 안건 · 3회 이상 이관 ${L.length}건</h3><div class="sub">출하 일정에 영향이 있으면 생산관리팀장 보고</div><div class="drtw"><table class="drt"><thead><tr><th>외주업체</th><th>PROJECT NO.</th><th>공정</th><th class="n">이관</th><th>최초 목표일</th><th>최근 사유</th><th>만회 계획</th></tr></thead><tbody>${L.map(({p,k,r,s})=>`<tr><td><span class="tag ${siteOf({site:s}).c}">${s}</span></td><td><button type="button" class="drlnk" data-open="${p.id}">${esc(p.pno)}</button></td><td>${esc(STEPS[k].l)}</td><td class="n"><span class="tag drcr3">${r.cr}회</span></td><td>${md(r.orig||'')}</td><td>${esc(rsLabel(r.rs||r.prs||''))}</td><td class="muted">${esc(r.rec||'')}</td></tr>`).join('')}</tbody></table></div></div>`; }
+function drVWkend(){ const ed=drCan(), base=drWs(TODAY), wks=[-2,-1,0,1,2,3,4,5,6,7].map(n=>addDays(base,n*7));
+  const cell=(s,d)=>{ const on=drOn(s,d), past=d<TODAY; return `<td class="c"><label class="drwk ${on?'on':''}"><input type="checkbox" data-drf="wkend" data-site="${esc(s)}" data-d="${d}" ${on?'checked':''} ${ed?'':'disabled'} aria-label="${esc(s)} ${drLab(d)} 출근"> ${on?'출근':'휴무'}</label>${past?'':''}</td>`; };
+  return `<div class="toolbar"><h2 style="margin:0">주말 출근</h2></div>
+   <div class="sub">외주업체가 토 · 일에 출근하는지 주마다 체크합니다. <b>출근</b>으로 체크한 날은 그 업체의 근무일이 되어 주간계획, 일보 생성, 미달 공정 이관(다음 근무일) 계산에 들어갑니다. 체크하지 않은 토 · 일은 휴무로 보고 건너뜁니다.${ed?'':' <b>체크는 생산관리 · 관리자만</b> 할 수 있습니다.'}</div>
+   <div class="drtw" style="max-width:820px"><table class="drt"><thead><tr><th>주</th>${TK_SITES.map(s=>`<th class="c" colspan="2"><span class="tag ${siteOf({site:s}).c}">${s}</span></th>`).join('')}</tr>
+   <tr><th></th>${TK_SITES.map(()=>'<th class="c">토</th><th class="c">일</th>').join('')}</tr></thead><tbody>
+   ${wks.map(ws=>{ const sa=addDays(ws,5), su=addDays(ws,6), cur=ws===base; return `<tr${cur?' class="drcur"':''}><td>${md(ws)} ~ ${md(su)}${cur?' <span class="tag">이번 주</span>':''}<br><small class="muted">토 ${md(sa)} · 일 ${md(su)}</small></td>${TK_SITES.map(s=>cell(s,sa)+cell(s,su)).join('')}</tr>`; }).join('')}
+   </tbody></table></div>
+   <div class="muted" style="font-size:12px">이미 마감한 일보의 이관 날짜는 바뀌지 않습니다. 금요일 마감 전에 주말 출근을 먼저 체크해 두면 미달 공정이 토요일 일보로 넘어갑니다.</div>`; }
+function drSaveWE(site,d,on){ if(!drNeed()) return; const c=drCl(drWE())||{}; const k=DR_SC[site]; c[k]=c[k]||{}; if(on) c[k][d]=1; else delete c[k][d]; drPut('drc/weekend',c); }
+function drVW(){ const w=drW(), sum=DR_KEYS.reduce((a,k)=>a+(+w[k]||0),0), ed=drCan();
+  return `<div class="toolbar"><h2 style="margin:0">공정 가중치</h2></div><div class="sub">장비 외주 공정률 표시에 쓰는 공정별 비율입니다(기본값 = 계약 별지 2 기성비율). <b>화면 표시용</b>이며 월 정산에는 쓰지 않습니다(정산은 인수 합격 대수 × 대당 단가). 0으로 두면 그 공정은 계산에서 빠집니다.</div>
+   <div class="drtw" style="max-width:520px"><table class="drt"><thead><tr><th>공정</th><th>담당</th><th class="n">가중치</th><th class="n">비율</th></tr></thead><tbody>${DR_KEYS.map(k=>`<tr><td>${esc(STEPS[k].l)}</td><td class="muted">외주업체</td><td class="n"><input class="drin" type="number" min="0" max="100" id="dr-w-${k}" data-drf="w" data-k="${k}" value="${w[k]}" ${ed?'':'disabled'} aria-label="${esc(STEPS[k].l)} 가중치"></td><td class="n muted">${sum?drPct(w[k]/sum*100):'–'}</td></tr>`).join('')}<tr><td colspan="2"><b>합계</b></td><td class="n"><b>${sum}</b></td><td></td></tr></tbody></table></div>`; }
+
+/* ---- 이벤트 ---- */
+function drSetDate(d){ if(!d) return; DR.date=d; DR.err=''; DR.text=null; DR.zero=false; if(DR.gate&&DR.gate.date!==d) DR.gate=null; drSubAll(); drRender(); }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-dr]'); if(!b) return; const a=b.dataset.dr, v=b.dataset.v;
+  if(a==='sub'){ DR.sub=v; DR.text=null; drRender(); return; }
+  if(a==='site'){ DR.site=v; DR.err=''; DR.zero=false; DR.text=null; DR.addU=null; drRender(); return; }
+  if(a==='prev') return drSetDate(drPrev(DR.date)); if(a==='next') return drSetDate(drNext(DR.date)); if(a==='today') return drSetDate(TODAY);
+  if(a==='gen') return void drGen(DR.site);
+  if(a==='genall'){ (async()=>{ if(!drNeed()) return; const gs=[]; for(const s of TK_SITES){ const ex=DR.cache[drDayId(DR.date,s)]; if(ex&&ex.pub) continue; const od=await drOpenDaysSure(s,DR.date); if(od.length) gs.push({s,days:od}); }
+      if(gs.length){ DR.gate={date:DR.date,all:true,sites:gs}; drRender(); return; }
+      let n=0; for(const s of TK_SITES) n+=Math.max(0,(await drGen(s,true))||0); toast(`전체 일보 생성 · 새 계획 ${n}건`); })(); return; }
+  if(a==='goopen'){ const [s,d]=v.split('|'); DR.gate=null; DR.site=s; DR.sub='day'; return drSetDate(d); }
+  if(a==='gatecancel'){ DR.gate=null; drRender(); return; }
+  if(a==='gateforce'){ const rs=($('#dr-gate-rs')&&$('#dr-gate-rs').value||'').trim(); if(!rs){ toast('그래도 만드는 사유를 적어 주세요'); $('#dr-gate-rs')&&$('#dr-gate-rs').focus(); return; }
+    const g=DR.gate; DR.gate=null; (async()=>{ let n=0; const sites=g.all?TK_SITES:g.sites.map(z=>z.s);
+      for(const s of sites){ const z=g.sites.find(x=>x.s===s); n+=Math.max(0,(await drGen(s,!!g.all,z?{rs,days:z.days}:null))||0); } if(g.all) toast(`전체 일보 생성 · 새 계획 ${n}건 (미마감 사유 기록)`); })(); return; }
+  if(a==='zero'){ DR.zero=true; drRender(); return; } if(a==='zerocancel'){ DR.zero=false; drRender(); return; }
+  if(a==='zerogo'){ const rs=$('#dr-zero-rs').value; return void drCloseZero(DR.site,rs); }
+  if(a==='close') return void drClose(DR.site); if(a==='reopen') return void drReopen(DR.site);
+  if(a==='add') return void drAdd(DR.site); if(a==='del') return void drDel(DR.site,v);
+  if(a==='res'){ const [rk,x]=v.split('|'), r=(DR.cache[drDayId(DR.date,DR.site)]||{rows:{}}).rows[rk]; if(!r) return; return void drReport(DR.site,rk,{res:rowRes(r)===x?'':x}); }
+  if(a==='pset'){ const [rk,d,s]=v.split('|'), [pid,k]=rk.split('__'), p=S.projects.get(pid); if(!p||!drNeed()) return;
+    if(drPlanAt(s,p,k,d).v!=null){ toast('완료 목표일을 옮기려면 다른 날짜 칸을 누르세요. 지우려면 장비 등록에서 계획일을 비우세요.'); return; }
+    if(!drWork(s,d)){ toast(`${drLab(d)}은 ${s} 휴무일입니다. 주말 출근이면 '주말 출근' 탭에서 먼저 체크하세요.`); return; }
+    (async()=>{ await write(p,{s:{[k]:{p:d}}},`${STEPS[k].l} 완료 목표일 ${md(d)} (주간계획)`); drRender(); toast(`${p.pno} ${STEPS[k].l} 완료 목표일 → ${drLab(d)}`); })(); return; }
+  if(a==='text'){ DR.text=drText(v==='ALL'?TK_SITES:[v]); drRender(); return; }
+  if(a==='wtext'){ DR.text=drWeekText(); drRender(); return; }
+  if(a==='closetxt'){ DR.text=null; drRender(); return; }
+  if(a==='pw'){ return drSetDate(addDays(DR.date,+v)); }
+  if(a==='span'){ DR.span=+v; drSubAll(); drRender(); return; }
+  if(a==='copytxt'){ const t=$('#dr-txt'); try{ navigator.clipboard.writeText(t.value).then(()=>toast('복사했습니다'),()=>{ t.select(); toast('Ctrl+C로 복사하세요'); }); }catch(_){ t.select(); toast('Ctrl+C로 복사하세요'); } return; }
+});
+document.addEventListener('change',e=>{ const t=e.target, f=t.dataset&&t.dataset.drf; if(!f) return; const rk=t.dataset.rk, num=()=>t.value===''?null:drClamp(Math.round(+t.value*10)/10);
+  if(f==='date') return drSetDate(t.value);
+  if(f==='addu'){ DR.addU=t.value; drRender(); return; }
+  if(f==='rs') return void drReport(DR.site,rk,{rs:t.value});
+  else if(f==='rec') return void drReport(DR.site,rk,{rec:t.value.trim()});
+  else if(f==='memo') return void drReport(DR.site,rk,{memo:t.value.trim()});
+  else if(f==='plan') drSavePlan(t.dataset.site,rk,t.dataset.d,t.value===''?'':num());
+  else if(f==='w') return drSaveW(t.dataset.k,t.value);
+  else if(f==='wkend') drSaveWE(t.dataset.site,t.dataset.d,t.checked);
+  setTimeout(drRender,0); });
+document.addEventListener('focusout',e=>{ if(DR.pend&&S.tab==='dr'){ setTimeout(()=>{ const a=document.activeElement; if(a&&a.closest&&a.closest('#main')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return; DR.pend=false; drRender(); },0); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('drin')) e.target.blur(); });
+
+/* ================= SMART 생산일보 (SMART PM 오픈 전 단독 운영판) =================
+   장비·공정 계획일은 [장비 등록] 탭에서 직접 등록 · 저장: units/<id> (장비), drd/drw/drp/drc (생산일보) */
+const SITES=[{id:'시노드',c:'sy'},{id:'동오정밀',c:'do'}];
+const siteOf=p=>SITES.find(z=>z.id===p.site)||SITES[0];
+const S={tab:'dr',projects:new Map(),db:null,me:'',dept:'보기',role:'',loaded:false,uq:'',uarch:false,hl:null,udel:null,codes:null};
+const ROLE_DEPT={admin:'관리자',pm:'생산관리',view:'보기'};
+const derive=p=>({keys:DR_KEYS,shipped:!!p.arch});
+const uCan=()=>['생산관리','관리자'].includes(S.dept);
+/* 날짜 입력: 1102 · 261102 · 20261102 · 11/2 · 26.11.2 · 2026-11-02 */
+function parseD(v){ v=String(v||'').trim(); if(!v) return ''; let m;
+  if((m=v.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})$/))) return fmtD(+m[1],+m[2],+m[3]);
+  if((m=v.match(/^(\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})$/))) return fmtD(2000+ +m[1],+m[2],+m[3]);
+  if((m=v.match(/^(\d{1,2})[./-](\d{1,2})$/))) return fmtD(guessY(+m[1]),+m[1],+m[2]);
+  if(/^\d{8}$/.test(v)) return fmtD(+v.slice(0,4),+v.slice(4,6),+v.slice(6));
+  if(/^\d{6}$/.test(v)) return fmtD(2000+ +v.slice(0,2),+v.slice(2,4),+v.slice(4));
+  if(/^\d{3,4}$/.test(v)){ const mo=+v.slice(0,v.length-2), d=+v.slice(-2); return fmtD(guessY(mo),mo,d); }
+  if((m=v.match(/^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일?$/))) return fmtD(+m[1],+m[2],+m[3]);
+  return null; }
+const guessY=mo=>{ const y=+TODAY.slice(0,4), cm=+TODAY.slice(5,7); return mo<cm-6?y+1:(mo>cm+6?y-1:y); };
+function fmtD(y,m,d){ if(m<1||m>12||d<1||d>31) return null; const t=new Date(y,m-1,d); if(t.getMonth()!==m-1) return null; return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+/* ---- 장비 저장 ---- */
+const UQ={};
+function uPut(p){ const body=JSON.parse(JSON.stringify(p)); delete body.id; S.projects.set(p.id,p);
+  UQ[p.id]=(UQ[p.id]||Promise.resolve()).then(()=>S.db.collection('units').doc(p.id).set(body)).catch(e=>{ console.error(e); toast('저장하지 못했습니다. 편집 권한과 연결 상태를 확인해 주세요.'); }); return UQ[p.id]; }
+function mergeDeep(a,b){ for(const [k,v] of Object.entries(b)){ if(v&&typeof v==='object'&&!Array.isArray(v)){ a[k]=a[k]&&typeof a[k]==='object'?a[k]:{}; mergeDeep(a[k],v); } else if(v===undefined) delete a[k]; else a[k]=v; } return a; }
+/* 생산일보 모듈이 부르는 저장 함수 (공정 완료 체크 등) */
+async function write(p,patch,msg){ const q=JSON.parse(JSON.stringify(S.projects.get(p.id)||p)); mergeDeep(q,patch); q.hist=[...(q.hist||[]).slice(-49),{at:new Date().toISOString(),by:S.me||'',msg:msg||''}]; await uPut(q); return true; }
+const newId=()=>'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function uRate(p){ return drUnitRate(p,k=>drNow(p,k)); }
+
+/* ---- 장비 등록 화면 ---- */
+function vUnits(){ const ed=uCan(), q=S.uq.trim().toLowerCase();
+  const all=[...S.projects.values()].sort((a,b)=>(a.site||'').localeCompare(b.site||'')||String(a.pno).localeCompare(String(b.pno),undefined,{numeric:true}));
+  const list=all.filter(p=>(S.uarch?true:!p.arch)&&(!q||[p.pno,p.cust,p.type,p.site,p.rmk].join(' ').toLowerCase().includes(q)));
+  const nAct=all.filter(p=>!p.arch).length, nArch=all.length-nAct;
+  const dcell=(p,k)=>{ const s=(p.s||{})[k]||{}, done=!!s.d, late=!done&&s.p&&s.p<TODAY, pr=drNow(p,k);
+    const top=ed&&!p.arch?`<input class="drin ud ${late?'err':''}" id="u-${p.id}-${k}" data-uf="plan" data-id="${p.id}" data-k="${k}" value="${esc(md(s.p||''))}" placeholder="–" aria-label="${esc(p.pno)} ${STEPS[k].l} 계획일" ${done?'disabled':''}>`:`<span class="${late?'late':''}">${s.p?md(s.p):'–'}</span>`;
+    const bot=done?`<span class="tag shipped" title="완료일 ${esc((s.da||'').slice(0,10))}">완료 ${esc(md((s.da||'').slice(0,10)))}</span>${ed&&!p.arch?` <button type="button" class="lnk" data-uf="undo" data-id="${p.id}" data-k="${k}" title="완료 취소">취소</button>`:''}`
+      :(pr>0?`<span class="muted">${drPct(pr)}</span>`:'')+(ed&&!p.arch?` <button type="button" class="lnk" data-uf="done" data-id="${p.id}" data-k="${k}" title="생산일보 없이 바로 완료로 체크">완료</button>`:'');
+    return `<td class="uc ${done?'udone':''} ${late?'ulate':''}">${top}<div class="usub">${bot}</div></td>`; };
+  const rows=list.map((p,i)=>{ const rest=DR_KEYS.filter(k=>!drDone(p,k)).length;
+    const del=S.udel===p.id;
+    return `<tr id="ur-${p.id}" class="${S.hl===p.id?'uhl':''} ${p.arch?'uarch':''}"><td class="muted">${i+1}</td>
+      <td>${ed&&!p.arch?`<select data-uf="site" data-id="${p.id}" aria-label="외주업체">${TK_SITES.map(s=>`<option ${p.site===s?'selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag ${siteOf(p).c}">${esc(p.site)}</span>`}</td>
+      <td>${ed&&!p.arch?`<input class="ut b" data-uf="pno" data-id="${p.id}" value="${esc(p.pno)}" aria-label="PROJECT NO.">`:`<b>${esc(p.pno)}</b>`}</td>
+      <td>${ed&&!p.arch?`<input class="ut" data-uf="cust" data-id="${p.id}" value="${esc(p.cust||'')}" aria-label="고객사">`:esc(p.cust||'')}</td>
+      <td>${ed&&!p.arch?`<input class="ut" data-uf="type" data-id="${p.id}" value="${esc(p.type||'')}" aria-label="TYPE">`:esc(p.type||'')}</td>
+      ${DR_KEYS.map(k=>dcell(p,k)).join('')}
+      <td class="n"><b>${drPct(uRate(p))}</b>${rest?'':'<div><span class="tag shipped">외주 완료</span></div>'}</td>
+      <td>${ed?`<input class="ut" data-uf="rmk" data-id="${p.id}" value="${esc(p.rmk||'')}" aria-label="비고">`:esc(p.rmk||'')}</td>
+      <td class="uact">${ed?(p.arch?`<button class="btn sm" type="button" data-uf="unarch" data-id="${p.id}">되살리기</button>`:`<button class="btn sm" type="button" data-uf="arch" data-id="${p.id}" title="외주가 끝난 장비를 목록과 일보에서 뺍니다">보관</button>`)+(S.dept==='관리자'?` <button class="btn sm ${del?'danger':''}" type="button" data-uf="del" data-id="${p.id}">${del?'정말 삭제':'삭제'}</button>`:''):''}</td></tr>`; }).join('');
+  return `<div class="toolbar"><h2 style="margin:0">장비 등록</h2><span class="muted">진행 ${nAct}대${nArch?` · 보관 ${nArch}대`:''}</span><span style="margin-left:auto"></span>
+      <input class="f" type="search" id="uq" value="${esc(S.uq)}" placeholder="PROJECT NO. · 고객사 · TYPE 검색" aria-label="장비 검색" style="min-width:220px">
+      <label class="muted"><input type="checkbox" id="uarch" ${S.uarch?'checked':''}> 보관 장비 보기</label>
+      ${ed?`<button class="btn" type="button" id="uPaste">엑셀에서 붙여넣기</button><button class="btn pri" type="button" id="uAdd">＋ 장비 추가</button>`:''}</div>
+    <div class="note">SMART PM이 열리기 전까지 외주 장비와 공정 계획일을 여기서 관리합니다. <b>계획일</b>은 그 공정의 <b>완료 목표일</b>이며 주간계획 · 일보에 자동으로 들어갑니다. 생산일보에서 '완료'로 마감한 공정은 여기에 <b>완료</b>로 표시됩니다. 날짜는 1102 · 11/2 · 26.11.02처럼 입력하세요.${ed?'':' <b>입력은 생산관리 · 관리자만</b> 할 수 있습니다.'}</div>
+    ${list.length?`<div class="drtw"><table class="drt ut-t"><thead><tr><th>No</th><th>외주업체</th><th>PROJECT NO.</th><th>고객사</th><th>TYPE</th>${DR_KEYS.map(k=>`<th class="uc">${esc(STEPS[k].l)}</th>`).join('')}<th class="n">외주 공정률</th><th>비고</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
+      :`<div class="empty"><b>${all.length?'조건에 맞는 장비가 없습니다':'등록된 외주 장비가 없습니다'}</b><br>${ed?'<b>＋ 장비 추가</b>로 한 대씩 넣거나, <b>엑셀에서 붙여넣기</b>로 여러 대를 한 번에 넣으세요.':''}</div>`}`; }
+
+/* ---- 붙여넣기 ---- */
+const PCOLS=['외주업체','PROJECT NO.','고객사','TYPE',...DR_KEYS.map(k=>STEPS[k].l)];
+function openPaste(){ $('#layer').innerHTML=`<div class="scrim" data-close></div><div class="modal" role="dialog" aria-modal="true" aria-label="엑셀에서 붙여넣기" style="max-width:860px">
+  <h3 style="margin:0 0 6px">엑셀에서 붙여넣기</h3>
+  <div class="sub">엑셀에서 아래 순서의 열을 복사해 붙여넣으세요. 첫 줄이 머리글이면 자동으로 건너뜁니다. 같은 외주업체 + PROJECT NO.가 이미 있으면 빈칸이 아닌 값만 덮어씁니다.</div>
+  <div class="toolbar" style="margin:8px 0"><code style="font-size:11.5px;background:var(--panel2);padding:4px 8px;border-radius:4px">${PCOLS.map(esc).join(' │ ')}</code><button class="btn sm" type="button" id="pTpl">머리글 복사</button></div>
+  <textarea id="pTxt" rows="10" style="width:100%;font:12px var(--mono)" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
+  <div id="pPrev" class="sub" style="margin:6px 0"></div>
+  <div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" type="button" data-close>취소</button><button class="btn pri" type="button" id="pGo">등록</button></div></div>`; setTimeout(()=>$('#pTxt').focus(),30); }
+function parsePaste(t){ const out=[], bad=[]; String(t||'').split(/\r?\n/).forEach((ln,i)=>{ if(!ln.trim()) return; const c=ln.split('\t').map(x=>x.trim());
+    if(i===0&&/외주|PROJECT|업체/i.test(c.join(' '))) return;
+    let site=c[0]; if(/시노/.test(site)) site='시노드'; else if(/동오|동호/.test(site)) site='동오정밀';
+    const pno=c[1]; if(!TK_SITES.includes(site)||!pno){ bad.push(i+1); return; }
+    const s={}; let badD=false; DR_KEYS.forEach((k,j)=>{ const v=(c[4+j]||'').trim(); if(!v) return; if(/^(완료|done|ok|o|v|✔|✓)$/i.test(v)){ s[k]='__done'; return; } const d=parseD(v); if(d===null){ badD=true; return; } s[k]=d; });
+    if(badD){ bad.push(i+1); return; }
+    out.push({site,pno,cust:c[2]||'',type:c[3]||'',s}); }); return {out,bad}; }
+async function doPaste(){ const {out,bad}=parsePaste($('#pTxt').value); if(!out.length){ toast(`등록할 줄이 없습니다${bad.length?` (${bad.join(', ')}번째 줄 확인)`:''}. 외주업체(시노드/동오정밀) · PROJECT NO. · 날짜 형식을 확인하세요.`); return; }
+  let nN=0,nU=0; for(const r of out){ let p=[...S.projects.values()].find(x=>x.site===r.site&&String(x.pno).trim()===r.pno&&!x.arch);
+    if(!p){ p={id:newId(),pno:r.pno,cust:r.cust,type:r.type,site:r.site,prod:'TK',s:{},at:new Date().toISOString(),by:S.me||'',hist:[]}; nN++; } else { p=JSON.parse(JSON.stringify(p)); if(r.cust) p.cust=r.cust; if(r.type) p.type=r.type; nU++; }
+    p.s=p.s||{}; for(const [k,v] of Object.entries(r.s)){ p.s[k]=p.s[k]||{}; if(v==='__done'){ p.s[k].d=1; p.s[k].da=p.s[k].da||new Date().toISOString(); } else p.s[k].p=v; }
+    p.hist=[...(p.hist||[]).slice(-49),{at:new Date().toISOString(),by:S.me||'',msg:'엑셀 붙여넣기'}]; await uPut(p); }
+  closeL(); render(); toast(`새 장비 ${nN}대 등록 · 기존 ${nU}대 갱신${bad.length?` · 등록 안 한 줄 ${bad.join(', ')}번째 (업체명 · PROJECT NO. · 날짜 형식 확인)`:''}`); }
+function closeL(){ $('#layer').innerHTML=''; }
+
+/* ---- 화면 틀 ---- */
+function renderTabs(){ $('#tabs').innerHTML=[['dr','생산일보'],['units','장비 등록'],...(S.role==='admin'?[['codes','입장 코드']]:[])].map(([id,l])=>`<button type="button" data-tab="${id}" class="${S.tab===id?'on':''}">${l}</button>`).join(''); }
+function renderWho(){ $('#who').innerHTML=S.role?`<span class="tag dept">${esc(S.dept)}</span><b>${esc(S.me)}</b><button class="btn sm" type="button" id="logout">로그아웃</button>`:''; }
+function setConn(state,text){ const c=$('#conn'); c.className='conn '+state; c.querySelector('span').textContent=text; }
+function render(){ renderTabs(); const m=$('#main'), keep=m.scrollTop;
+  if(!S.loaded){ m.innerHTML=`<div class="wrap">${S.db===false?'<div class="note">서버에 연결할 수 없습니다. 인터넷(사내망) 연결을 확인하고 잠시 뒤 새로고침해 주세요.</div>':'<div class="empty">데이터를 불러오는 중입니다…</div>'}</div>`; return; }
+  const sx=(m.querySelector('.drtw')||{}).scrollLeft||0;
+  m.innerHTML=`<div class="wrap">${S.tab==='units'?vUnits():S.tab==='codes'?vCodes():vDr()}</div>`; m.scrollTop=keep; const tw=m.querySelector('.drtw'); if(tw) tw.scrollLeft=sx;
+  if(S.hl&&S.tab==='units'){ const r=document.getElementById('ur-'+S.hl); if(r){ r.scrollIntoView({block:'center'}); } S.hlOnce=S.hl; S.hl=null; } }
+const uFocused=()=>{ const a=document.activeElement; return a&&a.closest&&a.closest('#main')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName); };
+function uRefresh(){ if(uFocused()){ S.upend=true; return; } if(S.tab==='units') render(); else drRefresh(); }
+
+/* ---- 이벤트 ---- */
+document.addEventListener('click',async e=>{ const t=e.target;
+  const tb=t.closest&&t.closest('[data-tab]'); if(tb){ S.tab=tb.dataset.tab; S.udel=null; render(); return; }
+  const op=t.closest&&t.closest('[data-open]'); if(op){ S.tab='units'; S.hl=op.dataset.open; S.uarch=S.uarch||!!(S.projects.get(op.dataset.open)||{}).arch; render(); return; }
+  if(t.matches&&t.matches('[data-close]')){ closeL(); return; }
+  if(t.id==='uAdd'){ const p={id:newId(),pno:'',cust:'',type:'',site:TK_SITES[0],prod:'TK',s:{},at:new Date().toISOString(),by:S.me||'',hist:[{at:new Date().toISOString(),by:S.me||'',msg:'장비 추가'}]}; await uPut(p); S.uq=''; S.hl=p.id; render(); setTimeout(()=>{ const i=document.querySelector(`#ur-${p.id} [data-uf=pno]`); if(i) i.focus(); },50); return; }
+  if(t.id==='uPaste'){ openPaste(); return; }
+  if(t.id==='pTpl'){ try{ await navigator.clipboard.writeText(PCOLS.join('\t')); toast('머리글을 복사했습니다. 엑셀 첫 줄에 붙여넣으세요.'); }catch(_){ toast('복사하지 못했습니다'); } return; }
+  if(t.id==='pGo'){ await doPaste(); return; }
+  const b=t.closest&&t.closest('button[data-uf]'); if(!b||!uCan()) return; const p=S.projects.get(b.dataset.id); if(!p) return; const f=b.dataset.uf, k=b.dataset.k;
+  if(f==='done'){ await write(p,{s:{[k]:{d:1,da:new Date(TODAY+'T18:00:00').toISOString(),db:S.me||''}}},`${STEPS[k].l} 완료 (장비 등록에서 직접)`); render(); toast(`${p.pno} ${STEPS[k].l} 완료`); return; }
+  if(f==='undo'){ const q=JSON.parse(JSON.stringify(p)); if(q.s&&q.s[k]){ delete q.s[k].d; delete q.s[k].da; delete q.s[k].db; } q.hist=[...(q.hist||[]).slice(-49),{at:new Date().toISOString(),by:S.me||'',msg:`${STEPS[k].l} 완료 취소`}]; await uPut(q); render(); toast('완료를 취소했습니다'); return; }
+  if(f==='arch'||f==='unarch'){ await write(p,{arch:f==='arch'?1:0},f==='arch'?'보관':'되살리기'); render(); toast(f==='arch'?`${p.pno}를 보관했습니다. 생산일보에서 빠집니다.`:`${p.pno}를 되살렸습니다.`); return; }
+  if(f==='del'){ if(S.udel!==p.id){ S.udel=p.id; render(); setTimeout(()=>{ if(S.udel===p.id){ S.udel=null; render(); } },4000); return; }
+    S.udel=null; S.projects.delete(p.id); try{ await S.db.collection('units').doc(p.id).delete(); }catch(e){ console.error(e); } render(); toast(`${p.pno||'장비'} 삭제`); return; }
+});
+document.addEventListener('change',async e=>{ const t=e.target;
+  if(t.id==='uarch'){ S.uarch=t.checked; render(); return; }
+  const f=t.dataset&&t.dataset.uf; if(!f||!uCan()) return; const p=S.projects.get(t.dataset.id); if(!p) return;
+  if(f==='plan'){ const k=t.dataset.k, v=parseD(t.value); if(v===null){ t.classList.add('err'); toast('날짜 형식: 1102 · 11/2 · 26.11.02 · 2026-11-02'); return; } if(((p.s||{})[k]||{}).p===(v||undefined)) return;
+    const q=JSON.parse(JSON.stringify(p)); q.s=q.s||{}; q.s[k]=q.s[k]||{}; if(v) q.s[k].p=v; else delete q.s[k].p; q.hist=[...(q.hist||[]).slice(-49),{at:new Date().toISOString(),by:S.me||'',msg:`${STEPS[k].l} 계획일 ${v?md(v):'지움'}`}]; await uPut(q); t.value=md(v); t.classList.remove('err'); return; }
+  if(['site','pno','cust','type','rmk'].includes(f)){ const v=t.value.trim(); if(String(p[f]||'')===v) return; if(f==='pno'&&!v){ t.value=p.pno; toast('PROJECT NO.는 비울 수 없습니다'); return; } await write(p,{[f]:v},`${{site:'외주업체',pno:'PROJECT NO.',cust:'고객사',type:'TYPE',rmk:'비고'}[f]} → ${v}`); return; }
+});
+document.addEventListener('input',e=>{ if(e.target.id==='uq'){ S.uq=e.target.value; const pos=e.target.selectionStart; render(); const i=$('#uq'); if(i){ i.focus(); try{ i.setSelectionRange(pos,pos); }catch(_){} } } });
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.classList&&(e.target.classList.contains('ud')||e.target.classList.contains('ut'))) e.target.blur(); if(e.key==='Escape'&&$('#layer').innerHTML) closeL(); });
+document.addEventListener('focusout',()=>{ if(S.upend&&S.tab==='units') setTimeout(()=>{ if(uFocused()) return; S.upend=false; render(); },0); });
+
+/* ---- 입장 코드 (관리자) ---- */
+async function loadCodes(){ try{ S.codes=await SDR.api('codes'); }catch(e){ S.codes={err:e.message}; } if(S.tab==='codes') render(); }
+function vCodes(){ if(!S.codes){ loadCodes(); return '<div class="empty">불러오는 중…</div>'; } if(S.codes.err) return `<div class="note">${esc(S.codes.err)}</div>`;
+  const url=new URL('m.html',location.href).href;
+  return `<div class="toolbar"><h2 style="margin:0">입장 코드</h2><span style="margin-left:auto"></span><button class="btn" type="button" id="cRefresh">새로고침</button><button class="btn" type="button" id="cBackup">데이터 백업 받기</button></div>
+   <div class="note">업체 현장 책임자에게는 <b>업체 모바일 주소</b>와 그 업체 코드만 알려 주세요. 휴대폰에서 주소를 열고 코드와 이름을 넣으면 됩니다(홈 화면에 추가하면 앱처럼 쓸 수 있음). 코드를 바꾸면 <b>그 코드로 들어와 있던 사람은 모두 다시 로그인</b>해야 합니다. 담당자가 바뀌거나 코드가 새면 바로 바꾸세요.</div>
+   <div class="card"><b>업체 모바일 주소</b> <code style="font-size:14px;margin-left:8px">${esc(url)}</code> <button class="btn sm" type="button" id="cCopyUrl">복사</button> · PC 주소 <code>${esc(new URL('./',location.href).href)}</code></div>
+   <div class="drtw" style="max-width:760px"><table class="drt"><thead><tr><th>역할</th><th>할 수 있는 일</th><th>입장 코드</th><th></th></tr></thead><tbody>${S.codes.codes.map(c=>`<tr><td><b>${esc(c.label)}</b></td><td class="muted">${{admin:'모두 + 입장 코드 관리 · 장비 삭제',pm:'장비 등록 · 일보 생성 · 마감',view:'PC 화면 보기만',SND:'모바일: 시노드 일보 완료/미완료 입력',DOJ:'모바일: 동오정밀 일보 완료/미완료 입력'}[c.role]||''}</td><td><code style="font-size:15px;letter-spacing:.08em">${esc(c.code)}</code></td><td><button class="btn sm" type="button" data-code="${c.role}">새 코드로 바꾸기</button></td></tr>`).join('')}</tbody></table></div>
+   <h3>로그인해 있는 사람 (${S.codes.sessions.length})</h3><div class="drtw" style="max-width:760px"><table class="drt"><thead><tr><th>역할</th><th>이름</th><th>처음 로그인</th><th>최근 사용</th><th>기기</th></tr></thead><tbody>${S.codes.sessions.map(x=>`<tr><td>${esc(x.label)}</td><td>${esc(x.name)}</td><td class="muted">${hm(x.at)}</td><td>${hm(x.last)}</td><td class="muted" style="max-width:260px;overflow:hidden;text-overflow:ellipsis">${esc(/iPhone|iPad/.test(x.ua)?'iPhone':/Android/.test(x.ua)?'Android':/Windows/.test(x.ua)?'Windows PC':x.ua)}</td></tr>`).join('')}</tbody></table></div>`; }
+document.addEventListener('click',async e=>{ const t=e.target;
+  if(t.id==='logout') return void SDR.logout();
+  if(t.id==='cRefresh'){ S.codes=null; render(); return; }
+  if(t.id==='cCopyUrl'){ try{ await navigator.clipboard.writeText(new URL('m.html',location.href).href); toast('주소를 복사했습니다'); }catch(_){ toast('복사하지 못했습니다'); } return; }
+  if(t.id==='cBackup'){ try{ const j=await SDR.api('backup'); const b=new Blob([JSON.stringify(j.db)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`sdr-backup-${TODAY}.json`; a.click(); }catch(_){ toast('백업을 받지 못했습니다'); } return; }
+  const c=t.closest&&t.closest('[data-code]'); if(c){ if(c.dataset.sure!=='1'){ c.dataset.sure='1'; c.textContent='한 번 더 누르면 바뀝니다'; c.classList.add('danger'); setTimeout(()=>{ if(c.isConnected){ c.dataset.sure=''; c.textContent='새 코드로 바꾸기'; c.classList.remove('danger'); } },4000); return; }
+    try{ S.codes=await SDR.api('codes',{role:c.dataset.code}); render(); toast('코드를 바꿨습니다. 새 코드를 담당자에게 알려 주세요.'); }catch(x){ toast(x.message); } }
+});
+
+/* ---- 시작 ---- */
+SDR.onLogout=()=>location.reload();
+SDR.status=st=>setConn(st==='live'?'live':'off',st==='live'?'연결됨 · 자동 갱신':'연결 끊김 · 다시 시도 중');
+function showLogin(){ document.querySelector('.app').hidden=true; const d=document.createElement('div'); document.body.appendChild(d);
+  loginView(d,{title:'SMART 생산일보',sub:'외주 일일 계획 · 실적 (생산관리팀)',onDone:()=>location.reload()}); }
+renderWho(); render();
+(async()=>{
+  if(!SDR.tok){ showLogin(); return; }
+  try{ await SDR.start(); }catch(e){ if(e.status===401||!SDR.tok){ showLogin(); return; } S.db=false; setConn('off','서버 연결 안 됨'); render(); return; }
+  if(SDR.me.site){ location.replace('m.html'); return; }
+  S.role=SDR.me.role; S.dept=ROLE_DEPT[S.role]||'보기'; S.me=SDR.me.name; renderWho();
+  const db=await sdrClaudeShim().use('db');
+  S.db=db; setConn('live','연결됨 · 자동 갱신');
+  db.collection('units').onSnapshot(q=>{ for(const ch of q.docChanges()){ const id=ch.doc.id; if(ch.type==='removed') S.projects.delete(id); else S.projects.set(id,{...ch.doc.data(),id}); }
+    if(!S.loaded){ S.loaded=true; render(); } else uRefresh(); });
+  drSubAll();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+
+</script>
+</body></html>
