@@ -48,9 +48,10 @@ const SDR={
   setTok(t){ this.tok=t||''; try{ t?localStorage.setItem('sdr.tok',t):localStorage.removeItem('sdr.tok'); }catch(e){} },
   async api(a,params={}){
     if(!this.url||/여기에/.test(this.url)){ const e=new Error('config.js에 서버 주소(SDR_API_URL)가 없습니다. 설치 설명서 4단계를 확인해 주세요.'); e.status=0; throw e; }
-    let r;
-    try{ r=await fetch(this.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({a,t:this.tok,...params}),redirect:'follow'}); }
-    catch(x){ const e=new Error('서버에 연결할 수 없습니다. 인터넷 연결을 확인해 주세요.'); e.status=0; throw e; }
+    let r; const ac=new AbortController(), tm=setTimeout(()=>ac.abort(),30000);
+    try{ r=await fetch(this.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({a,t:this.tok,...params}),redirect:'follow',signal:ac.signal}); }
+    catch(x){ const e=new Error(x&&x.name==='AbortError'?'서버가 30초 동안 응답하지 않습니다. 잠시 뒤 다시 시도해 주세요.':'서버에 연결할 수 없습니다. 인터넷 연결을 확인해 주세요.'); e.status=0; this.lastErr=e.message; throw e; }
+    finally{ clearTimeout(tm); }
     let j=null; try{ j=await r.json(); }catch(x){}
     if(!j){ const e=new Error('서버 응답을 읽지 못했습니다 ('+r.status+').'); e.status=r.status||500; throw e; }
     if(j.error){ if(j.status===401&&a!=='login'){ this.setTok(''); if(this.onLogout) this.onLogout(); } const e=new Error(j.error); e.status=j.status; throw e; }
@@ -106,3 +107,23 @@ function loginView(el,{title,sub,onDone}){
   el.querySelector('#lform').addEventListener('submit',async e=>{ e.preventDefault(); const code=el.querySelector('#lcode').value, name=el.querySelector('#lname').value.trim(), er=el.querySelector('#lerr');
     er.textContent=''; try{ const j=await SDR.login(code,name); try{ localStorage.setItem('sdr.name',name); }catch(_){} onDone(j); }catch(x){ er.textContent=x.message; } });
 }
+
+/* ---- '불러오는 중'에서 멈췄을 때: 원인과 해결 버튼을 화면에 보여 줌 ---- */
+window.addEventListener('error',e=>{ SDR.lastErr=(e.message||'오류')+(e.filename?` (${e.filename.split('/').pop()}:${e.lineno})`:''); });
+window.addEventListener('unhandledrejection',e=>{ SDR.lastErr=String((e.reason&&e.reason.message)||e.reason); });
+async function sdrReset(logout){ try{ if(logout) localStorage.removeItem('sdr.tok'); }catch(_){}
+  try{ for(const k of await caches.keys()) await caches.delete(k); }catch(_){}
+  try{ for(const r of await navigator.serviceWorker.getRegistrations()) await r.unregister(); }catch(_){}
+  try{ await fetch('config.js',{cache:'reload'}); await fetch('common.js',{cache:'reload'}); }catch(_){}
+  location.reload(); }
+setTimeout(()=>{ const main=document.querySelector('#main'), app=document.querySelector('#app');
+  const stuck=(main&&/불러오는 중/.test(main.innerText)&&!document.querySelector('.login'))||(app&&!app.innerHTML.trim());
+  if(!stuck||document.querySelector('.sdr-stuck')) return;
+  const box=document.createElement('div'); box.className='sdr-stuck';
+  box.style.cssText='position:fixed;left:50%;top:90px;transform:translateX(-50%);z-index:60;width:min(460px,calc(100vw - 32px));background:var(--panel,#fff);color:var(--ink,#1a2220);border:2px solid var(--warn,#a05f00);border-radius:12px;padding:16px;box-shadow:0 10px 32px rgba(0,0,0,.2);font-size:14px;line-height:1.5';
+  const url=SDR.url&&!/여기에/.test(SDR.url);
+  box.innerHTML=`<b style="font-size:16px">화면이 열리지 않고 있습니다</b><div style="margin:8px 0;color:var(--ink2,#56625e)">${!url?'config.js에 서버 주소가 없습니다(예전 파일일 수 있음). [다시 불러오기]를 눌러 주세요.':SDR.lastErr?'원인: '+esc(SDR.lastErr):'서버 응답을 기다리는 중입니다. 계속 이러면 아래 버튼을 눌러 주세요.'}</div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" id="sdrR1">다시 불러오기</button><button type="button" class="btn" id="sdrR2">처음부터 다시 로그인</button></div>`;
+  document.body.appendChild(box);
+  box.querySelector('#sdrR1').onclick=()=>sdrReset(false); box.querySelector('#sdrR2').onclick=()=>sdrReset(true);
+},15000);
