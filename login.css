@@ -1,3 +1,5 @@
+/* hidden 속성이 항상 이기도록 (로그인 화면이 아래로 밀리던 문제) */
+[hidden]{display:none!important}
 /* 로그인 화면 (PC · 모바일 공통) */
 .login{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--bg)}
 .lcard{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 6px 24px rgba(20,34,30,.08)}
