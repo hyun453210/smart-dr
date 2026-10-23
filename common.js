@@ -62,9 +62,15 @@ const SDR={
   async start(){ this.me=await this.api('me'); const j=await this.api('data'); this.cols=j.cols; this.now=j.now; this.listen(); return this.me; },
   apply(col,id,doc){ const old=(this.cols[col]||{})[id]; this.cols[col]=this.cols[col]||{}; if(doc==null) delete this.cols[col][id]; else this.cols[col][id]=doc;
     if(JSON.stringify(old)!==JSON.stringify(doc??undefined)) this.emit(col,id,doc??null,old); },
-  async poll(){ if(this.busyPoll||!this.tok) return; this.busyPoll=true;
-    try{ const j=await this.api('changes',{since:this.now}); for(const m of j.ch) this.apply(m.col,m.id,m.doc); if(j.now>this.now) this.now=j.now; this.status('live'); }
+  async poll(){ if(this.busyPoll||!this.tok) return; this.busyPoll=true; this.np=(this.np||0)+1;
+    try{
+      if(this.np%20===0){ await this.resync(); }   /* 약 3분마다 전체를 다시 받아 빠진 것이 있으면 맞춤 */
+      else{ const j=await this.api('changes',{since:this.now}); for(const m of j.ch) this.apply(m.col,m.id,m.doc); if(j.now>this.now) this.now=j.now; }
+      this.status('live'); }
     catch(e){ this.status('off'); } finally{ this.busyPoll=false; } },
+  async resync(){ const j=await this.api('data'); const old=this.cols;
+    for(const c of Object.keys(j.cols)){ const a=old[c]||{}, b=j.cols[c]||{}; for(const id of new Set([...Object.keys(a),...Object.keys(b)])) this.apply(c,id,b[id]??null); }
+    if(j.now>this.now) this.now=j.now; },
   listen(){ clearInterval(this.pt); this.status('live');
     this.pt=setInterval(()=>{ if(!document.hidden) this.poll(); },8000);
     document.addEventListener('visibilitychange',()=>{ if(!document.hidden) this.poll(); }); },
