@@ -782,6 +782,7 @@ function parseD(v){ v=String(v||'').trim(); if(!v) return ''; let m;
   if(/^\d{6}$/.test(v)) return fmtD(2000+ +v.slice(0,2),+v.slice(2,4),+v.slice(4));
   if(/^\d{3,4}$/.test(v)){ const mo=+v.slice(0,v.length-2), d=+v.slice(-2); return fmtD(guessY(mo),mo,d); }
   if((m=v.match(/^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일?$/))) return fmtD(+m[1],+m[2],+m[3]);
+  if((m=v.match(/^(\d{1,2})월\s*(\d{1,2})일?$/))) return fmtD(guessY(+m[1]),+m[1],+m[2]);
   return null; }
 const guessY=mo=>{ const y=+TODAY.slice(0,4), cm=+TODAY.slice(5,7); return mo<cm-6?y+1:(mo>cm+6?y-1:y); };
 function fmtD(y,m,d){ if(m<1||m>12||d<1||d>31) return null; const t=new Date(y,m-1,d); if(t.getMonth()!==m-1) return null; return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
