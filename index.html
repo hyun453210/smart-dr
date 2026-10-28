@@ -440,6 +440,8 @@ input.f{border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inhe
 .drpc.carry{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);font-weight:700}
 .drpc:disabled{cursor:default}
 .who b{font-size:13px}
+.tag.bl{background:var(--accent-weak);color:var(--accent);font-weight:600}
+.umore{position:relative;display:inline-block}.umore summary{list-style:none;cursor:pointer}.umore summary::-webkit-details-marker{display:none}.umenu{position:absolute;right:0;top:calc(100% + 4px);z-index:5;display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;box-shadow:var(--shadow);white-space:nowrap}
 </style>
 <link rel="stylesheet" href="login.css">
 </head><body>
@@ -742,6 +744,7 @@ document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closes
   if(a==='add') return void drAdd(DR.site); if(a==='del') return void drDel(DR.site,v);
   if(a==='res'){ const [rk,x]=v.split('|'), r=(DR.cache[drDayId(DR.date,DR.site)]||{rows:{}}).rows[rk]; if(!r) return; return void drReport(DR.site,rk,{res:rowRes(r)===x?'':x}); }
   if(a==='pset'){ const [rk,d,s]=v.split('|'), [pid,k]=rk.split('__'), p=S.projects.get(pid); if(!p||!drNeed()) return;
+    if(p.bl){ toast('이 장비의 날짜는 백로그에서 고칩니다. 백로그를 고친 뒤 [장비 등록] → [백로그 다시 읽기]를 누르세요.'); return; }
     if(drPlanAt(s,p,k,d).v!=null){ toast('완료 목표일을 옮기려면 다른 날짜 칸을 누르세요. 지우려면 장비 등록에서 계획일을 비우세요.'); return; }
     if(!drWork(s,d)){ toast(`${drLab(d)}은 ${s} 휴무일입니다. 주말 출근이면 '주말 출근' 탭에서 먼저 체크하세요.`); return; }
     (async()=>{ await write(p,{s:{[k]:{p:d}}},`${STEPS[k].l} 완료 목표일 ${md(d)} (주간계획)`); drRender(); toast(`${p.pno} ${STEPS[k].l} 완료 목표일 → ${drLab(d)}`); })(); return; }
@@ -803,17 +806,17 @@ function vUnits(){ const ed=uCan(), q=S.uq.trim().toLowerCase();
   const list=all.filter(p=>(S.uarch?true:!p.arch)&&(!q||[p.pno,p.cust,p.type,p.site,p.rmk].join(' ').toLowerCase().includes(q)));
   const nAct=all.filter(p=>!p.arch).length, nArch=all.length-nAct;
   const dcell=(p,k)=>{ const s=(p.s||{})[k]||{}, done=!!s.d, late=!done&&s.p&&s.p<TODAY, pr=drNow(p,k);
-    const top=ed&&!p.arch?`<input class="drin ud ${late?'err':''}" id="u-${p.id}-${k}" data-uf="plan" data-id="${p.id}" data-k="${k}" value="${esc(md(s.p||''))}" placeholder="–" aria-label="${esc(p.pno)} ${STEPS[k].l} 계획일" ${done?'disabled':''}>`:`<span class="${late?'late':''}">${s.p?md(s.p):'–'}</span>`;
+    const top=p.bl&&!p.arch?`<span class="${late?'late':''}" title="날짜는 백로그에서 고칩니다">${s.p?md(s.p):'–'}</span>`:ed&&!p.arch?`<input class="drin ud ${late?'err':''}" id="u-${p.id}-${k}" data-uf="plan" data-id="${p.id}" data-k="${k}" value="${esc(md(s.p||''))}" placeholder="–" aria-label="${esc(p.pno)} ${STEPS[k].l} 계획일" ${done?'disabled':''}>`:`<span class="${late?'late':''}">${s.p?md(s.p):'–'}</span>`;
     const bot=done?`<span class="tag shipped" title="완료일 ${esc((s.da||'').slice(0,10))}">완료 ${esc(md((s.da||'').slice(0,10)))}</span>${ed&&!p.arch?` <button type="button" class="lnk" data-uf="undo" data-id="${p.id}" data-k="${k}" title="완료 취소">취소</button>`:''}`
       :(pr>0?`<span class="muted">${drPct(pr)}</span>`:'')+(ed&&!p.arch?` <button type="button" class="lnk" data-uf="done" data-id="${p.id}" data-k="${k}" title="생산일보 없이 바로 완료로 체크">완료</button>`:'');
     return `<td class="uc ${done?'udone':''} ${late?'ulate':''}">${top}<div class="usub">${bot}</div></td>`; };
   const rows=list.map((p,i)=>{ const rest=DR_KEYS.filter(k=>!drDone(p,k)).length;
     const del=S.udel===p.id;
     return `<tr id="ur-${p.id}" class="${S.hl===p.id?'uhl':''} ${p.arch?'uarch':''}"><td class="muted">${i+1}</td>
-      <td>${ed&&!p.arch?`<select data-uf="site" data-id="${p.id}" aria-label="외주업체">${TK_SITES.map(s=>`<option ${p.site===s?'selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag ${siteOf(p).c}">${esc(p.site)}</span>`}</td>
-      <td>${ed&&!p.arch?`<input class="ut b" data-uf="pno" data-id="${p.id}" value="${esc(p.pno)}" aria-label="PROJECT NO.">`:`<b>${esc(p.pno)}</b>`}</td>
+      <td>${ed&&!p.arch&&!p.bl?`<select data-uf="site" data-id="${p.id}" aria-label="외주업체">${TK_SITES.map(s=>`<option ${p.site===s?'selected':''}>${s}</option>`).join('')}</select>`:`<span class="tag ${siteOf(p).c}">${esc(p.site)}</span>`}</td>
+      <td>${ed&&!p.arch&&!p.bl?`<input class="ut b" data-uf="pno" data-id="${p.id}" value="${esc(p.pno)}" aria-label="PROJECT NO.">`:`<b>${esc(p.pno)}</b>`}${p.bl?`<div><span class="tag ${p.blMissing?'drcr3':'bl'}" title="${p.blMissing?'백로그에서 이 행ID를 찾지 못했습니다':'백로그 행ID · 날짜는 백로그에서 고칩니다'}">${p.blMissing?'백로그에 없음':'백로그 '+esc(p.bl)}</span></div>`:''}</td>
       <td>${ed&&!p.arch?`<input class="ut" data-uf="cust" data-id="${p.id}" value="${esc(p.cust||'')}" aria-label="고객사">`:esc(p.cust||'')}</td>
-      <td>${ed&&!p.arch?`<input class="ut" data-uf="type" data-id="${p.id}" value="${esc(p.type||'')}" aria-label="TYPE">`:esc(p.type||'')}</td>
+      <td>${ed&&!p.arch&&!p.bl?`<input class="ut" data-uf="type" data-id="${p.id}" value="${esc(p.type||'')}" aria-label="TYPE">`:esc(p.type||'')}</td>
       ${DR_KEYS.map(k=>dcell(p,k)).join('')}
       <td class="n"><b>${drPct(uRate(p))}</b>${rest?'':'<div><span class="tag shipped">외주 완료</span></div>'}</td>
       <td>${ed?`<input class="ut" data-uf="rmk" data-id="${p.id}" value="${esc(p.rmk||'')}" aria-label="비고">`:esc(p.rmk||'')}</td>
@@ -821,13 +824,42 @@ function vUnits(){ const ed=uCan(), q=S.uq.trim().toLowerCase();
   return `<div class="toolbar"><h2 style="margin:0">장비 등록</h2><span class="muted">진행 ${nAct}대${nArch?` · 보관 ${nArch}대`:''}</span><span style="margin-left:auto"></span>
       <input class="f" type="search" id="uq" value="${esc(S.uq)}" placeholder="PROJECT NO. · 고객사 · TYPE 검색" aria-label="장비 검색" style="min-width:220px">
       <label class="muted"><input type="checkbox" id="uarch" ${S.uarch?'checked':''}> 보관 장비 보기</label>
-      ${ed?`<button class="btn" type="button" id="uPaste">엑셀에서 붙여넣기</button><button class="btn pri" type="button" id="uAdd">＋ 장비 추가</button>`:''}</div>
-    <div class="note">SMART PM이 열리기 전까지 외주 장비와 공정 계획일을 여기서 관리합니다. <b>계획일</b>은 그 공정의 <b>완료 목표일</b>이며 주간계획 · 일보에 자동으로 들어갑니다. 생산일보에서 '완료'로 마감한 공정은 여기에 <b>완료</b>로 표시됩니다. 날짜는 1102 · 11/2 · 26.11.02처럼 입력하세요.${ed?'':' <b>입력은 생산관리 · 관리자만</b> 할 수 있습니다.'}</div>
+      ${ed?`<button class="btn" type="button" id="blSync" title="연결된 장비의 날짜를 백로그에서 지금 다시 가져옵니다">백로그 다시 읽기</button>`:''}${S.role==='admin'?`<button class="btn pri" type="button" id="blOpen">백로그에서 외주 장비 지정</button>`:''}
+      ${ed?`<details class="umore"><summary class="btn">그 밖에</summary><div class="umenu"><button class="btn" type="button" id="uPaste">엑셀에서 붙여넣기</button><button class="btn" type="button" id="uAdd">＋ 장비 직접 추가</button></div></details>`:''}</div>
+    <div class="note">외주 장비와 공정 완료 목표일은 <b>백로그(BACKLOG STATUS · SYSTEM 시트)에서 읽어 옵니다</b>. 관리자가 [백로그에서 외주 장비 지정]으로 시노드 · 동오정밀 장비를 한 번 지정하면, 그다음부터는 <b>매일 아침 6시</b>와 [백로그 다시 읽기]를 누를 때 백로그 날짜로 자동으로 맞춰집니다. <b>날짜는 백로그에서만 고칩니다</b>(이 화면에서는 보기만). 백로그 1공장 자재불출 = 자재 입고. 백로그의 완료 체크박스는 쓰지 않으며, 완료는 생산일보 마감으로만 표시됩니다.${(()=>{ const b=(SDR.cols.drc||{}).backlog; return b?` <span class="muted">· 마지막 가져오기 ${hm(b.at)} (${esc(b.by||'')}) · 연결 ${b.n}대 · 바뀐 장비 ${b.changed}대${b.missing&&b.missing.length?` · <b style="color:var(--bad)">백로그에 없는 장비 ${b.missing.length}대</b>`:''}</span>`:''; })()}${ed?'':' <b>입력은 생산관리 · 관리자만</b> 할 수 있습니다.'}</div>
     ${list.length?`<div class="drtw"><table class="drt ut-t"><thead><tr><th>No</th><th>외주업체</th><th>PROJECT NO.</th><th>고객사</th><th>TYPE</th>${DR_KEYS.map(k=>`<th class="uc">${esc(STEPS[k].l)}</th>`).join('')}<th class="n">외주 공정률</th><th>비고</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
-      :`<div class="empty"><b>${all.length?'조건에 맞는 장비가 없습니다':'등록된 외주 장비가 없습니다'}</b><br>${ed?'<b>＋ 장비 추가</b>로 한 대씩 넣거나, <b>엑셀에서 붙여넣기</b>로 여러 대를 한 번에 넣으세요.':''}</div>`}`; }
+      :`<div class="empty"><b>${all.length?'조건에 맞는 장비가 없습니다':'등록된 외주 장비가 없습니다'}</b><br>${S.role==='admin'?'<b>백로그에서 외주 장비 지정</b>을 눌러 시노드 · 동오정밀 장비를 고르세요.':ed?'관리자가 백로그에서 외주 장비를 지정하면 여기에 나타납니다.':''}</div>`}`; }
 
 /* ---- 붙여넣기 ---- */
 const PCOLS=['외주업체','PROJECT NO.','고객사','TYPE',...DR_KEYS.map(k=>STEPS[k].l)];
+/* ---- 백로그에서 외주 장비 지정 (관리자) ---- */
+const BL={rows:null,q:'',all:false,busy:{}};
+async function openBacklog(){ BL.rows=null; renderBL(); try{ const j=await SDR.api('blList'); BL.rows=j.rows; }catch(e){ BL.err=e.message; } renderBL(); }
+function blVisible(){ const q=BL.q.trim().toLowerCase(), from=addDays(TODAY,-21), to=addDays(TODAY,120);
+  return (BL.rows||[]).filter(x=>{ if(q) return [x.pno,x.type,x.place,x.rid].join(' ').toLowerCase().includes(q);
+    if(x.site) return true; if(BL.all) return true; const ds=Object.values(x.d); return ds.some(d=>d>=from&&d<=to); }); }
+function renderBL(){ const L=$('#layer'); const was=document.activeElement&&document.activeElement.id;
+  const body=BL.err?`<div class="note" style="color:var(--bad)">${esc(BL.err)}</div>`:!BL.rows?'<div class="empty">백로그를 읽는 중입니다… (몇 초 걸립니다)</div>':(()=>{ const v=blVisible(), shown=v.slice(0,300);
+    return `<div class="sub" style="margin:6px 0">${v.length}줄${v.length>300?' (앞의 300줄만 표시 · 검색으로 좁히세요)':''} · 지정된 장비 ${BL.rows.filter(x=>x.site).length}대</div>
+    <div class="drtw" style="max-height:calc(100vh - 300px)"><table class="drt"><thead><tr><th>행ID</th><th>사업장</th><th>PROJECT NO.</th><th>TYPE</th>${DR_KEYS.map(k=>`<th class="c">${esc(STEPS[k].l)}</th>`).join('')}<th>외주업체</th></tr></thead><tbody>${shown.map(x=>`<tr class="${x.site?'drcur':''}"><td class="muted">${esc(x.rid)}</td><td class="muted">${esc(x.place)}</td><td><b>${esc(x.pno)}</b></td><td class="muted">${esc(x.type)}</td>${DR_KEYS.map(k=>`<td class="c">${x.d[k]?md(x.d[k]):'<span class="muted">–</span>'}</td>`).join('')}
+      <td><span class="rseg">${TK_SITES.map(s=>`<button type="button" class="rbtn ${x.site===s?'done on':''}" data-bl="${esc(x.rid)}" data-site="${s}" ${BL.busy[x.rid]?'disabled':''}>${s}</button>`).join('')}${x.site?`<button type="button" class="rbtn" data-bl="${esc(x.rid)}" data-site="" ${BL.busy[x.rid]?'disabled':''} title="외주 지정을 풀고 장비를 보관합니다">해제</button>`:''}</span></td></tr>`).join('')}</tbody></table></div>`; })();
+  L.innerHTML=`<div class="scrim" data-close></div><div class="modal wide" role="dialog" aria-modal="true" aria-label="백로그에서 외주 장비 지정" style="width:min(1400px,calc(100vw - 32px))">
+  <h3 style="margin:0 0 4px">백로그에서 외주 장비 지정</h3>
+  <div class="sub">백로그 SYSTEM 시트를 읽기만 합니다(백로그에는 아무것도 쓰지 않음). 외주로 보낼 장비 줄에서 <b>시노드</b> 또는 <b>동오정밀</b>을 누르면 장비 등록에 들어가고, 7개 공정 날짜가 완료 목표일이 됩니다. 기본으로는 최근 3주 ~ 앞으로 4개월 안에 공정 날짜가 있는 줄만 보입니다.</div>
+  <div class="toolbar" style="margin:10px 0 0"><input class="f" type="search" id="blq" value="${esc(BL.q)}" placeholder="PROJECT NO. · TYPE · 사업장 · 행ID 검색" style="min-width:320px" aria-label="백로그 검색"><label class="muted"><input type="checkbox" id="blall" ${BL.all?'checked':''}> 전체 줄 보기</label><span style="flex:1"></span><button class="btn" type="button" id="blReload">다시 읽기</button><button class="btn pri" type="button" data-close>닫기</button></div>
+  ${body}</div>`;
+  if(was){ const e=document.getElementById(was); if(e){ e.focus(); if(e.setSelectionRange&&e.type==='search'){ const n=e.value.length; e.setSelectionRange(n,n); } } } }
+document.addEventListener('input',e=>{ if(e.target.id==='blq'){ BL.q=e.target.value; renderBL(); } });
+document.addEventListener('change',e=>{ if(e.target.id==='blall'){ BL.all=e.target.checked; renderBL(); } });
+document.addEventListener('click',async e=>{ const t=e.target;
+  if(t.id==='blOpen'){ BL.err=''; openBacklog(); return; }
+  if(t.id==='blReload'){ BL.err=''; openBacklog(); return; }
+  if(t.id==='blSync'){ t.disabled=true; t.textContent='읽는 중…'; try{ const j=await SDR.api('blSync'); toast(`백로그에서 가져옴 · 연결 ${j.n}대 · 날짜가 바뀐 장비 ${j.changed}대${j.missing.length?` · 백로그에 없는 장비 ${j.missing.join(', ')}`:''}`); SDR.poll(); }catch(x){ toast(x.message); } render(); return; }
+  const b=t.closest&&t.closest('[data-bl]'); if(b){ const rid=b.dataset.bl, site=b.dataset.site, x=(BL.rows||[]).find(r=>r.rid===rid); if(!x) return;
+    if(x.site===site) return; BL.busy[rid]=1; renderBL();
+    try{ const j=await SDR.api('blLink',{rid,site}); x.site=site||undefined; x.uid=j.id; toast(site?`${x.pno} → ${site} 지정`:`${x.pno} 외주 지정 해제(보관)`); SDR.poll(); }catch(er){ toast(er.message); }
+    delete BL.busy[rid]; renderBL(); }
+});
 function openPaste(){ $('#layer').innerHTML=`<div class="scrim" data-close></div><div class="modal" role="dialog" aria-modal="true" aria-label="엑셀에서 붙여넣기" style="max-width:860px">
   <h3 style="margin:0 0 6px">엑셀에서 붙여넣기</h3>
   <div class="sub">엑셀에서 아래 순서의 열을 복사해 붙여넣으세요. 첫 줄이 머리글이면 자동으로 건너뜁니다. 같은 외주업체 + PROJECT NO.가 이미 있으면 빈칸이 아닌 값만 덮어씁니다.</div>
