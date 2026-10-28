@@ -838,18 +838,19 @@ async function openBacklog(){ BL.rows=null; renderBL(); try{ const j=await SDR.a
 function blVisible(){ const q=BL.q.trim().toLowerCase(), from=addDays(TODAY,-21), to=addDays(TODAY,120);
   return (BL.rows||[]).filter(x=>{ if(q) return [x.pno,x.type,x.place,x.rid].join(' ').toLowerCase().includes(q);
     if(x.site) return true; if(BL.all) return true; const ds=Object.values(x.d); return ds.some(d=>d>=from&&d<=to); }); }
-function renderBL(){ const L=$('#layer'); const was=document.activeElement&&document.activeElement.id;
+function renderBL(){ const L=$('#layer');
   const body=BL.err?`<div class="note" style="color:var(--bad)">${esc(BL.err)}</div>`:!BL.rows?'<div class="empty">백로그를 읽는 중입니다… (몇 초 걸립니다)</div>':(()=>{ const v=blVisible(), shown=v.slice(0,300);
     return `<div class="sub" style="margin:6px 0">${v.length}줄${v.length>300?' (앞의 300줄만 표시 · 검색으로 좁히세요)':''} · 지정된 장비 ${BL.rows.filter(x=>x.site).length}대</div>
     <div class="drtw" style="max-height:calc(100vh - 300px)"><table class="drt"><thead><tr><th>행ID</th><th>사업장</th><th>PROJECT NO.</th><th>TYPE</th>${DR_KEYS.map(k=>`<th class="c">${esc(STEPS[k].l)}</th>`).join('')}<th>외주업체</th></tr></thead><tbody>${shown.map(x=>`<tr class="${x.site?'drcur':''}"><td class="muted">${esc(x.rid)}</td><td class="muted">${esc(x.place)}</td><td><b>${esc(x.pno)}</b></td><td class="muted">${esc(x.type)}</td>${DR_KEYS.map(k=>`<td class="c">${x.d[k]?md(x.d[k]):'<span class="muted">–</span>'}</td>`).join('')}
       <td><span class="rseg">${TK_SITES.map(s=>`<button type="button" class="rbtn ${x.site===s?'done on':''}" data-bl="${esc(x.rid)}" data-site="${s}" ${BL.busy[x.rid]?'disabled':''}>${s}</button>`).join('')}${x.site?`<button type="button" class="rbtn" data-bl="${esc(x.rid)}" data-site="" ${BL.busy[x.rid]?'disabled':''} title="외주 지정을 풀고 장비를 보관합니다">해제</button>`:''}</span></td></tr>`).join('')}</tbody></table></div>`; })();
+  const box=document.getElementById('blBody'); if(box){ box.innerHTML=body; return; }   /* 검색칸은 다시 그리지 않음 (한글 입력이 끊기지 않도록) */
   L.innerHTML=`<div class="scrim" data-close></div><div class="modal wide" role="dialog" aria-modal="true" aria-label="백로그에서 외주 장비 지정" style="width:min(1400px,calc(100vw - 32px))">
   <h3 style="margin:0 0 4px">백로그에서 외주 장비 지정</h3>
   <div class="sub">백로그 SYSTEM 시트를 읽기만 합니다(백로그에는 아무것도 쓰지 않음). 외주로 보낼 장비 줄에서 <b>시노드</b> 또는 <b>동오정밀</b>을 누르면 장비 등록에 들어가고, 7개 공정 날짜가 완료 목표일이 됩니다. 기본으로는 최근 3주 ~ 앞으로 4개월 안에 공정 날짜가 있는 줄만 보입니다.</div>
   <div class="toolbar" style="margin:10px 0 0"><input class="f" type="search" id="blq" value="${esc(BL.q)}" placeholder="PROJECT NO. · TYPE · 사업장 · 행ID 검색" style="min-width:320px" aria-label="백로그 검색"><label class="muted"><input type="checkbox" id="blall" ${BL.all?'checked':''}> 전체 줄 보기</label><span style="flex:1"></span><button class="btn" type="button" id="blReload">다시 읽기</button><button class="btn pri" type="button" data-close>닫기</button></div>
-  ${body}</div>`;
-  if(was){ const e=document.getElementById(was); if(e){ e.focus(); if(e.setSelectionRange&&e.type==='search'){ const n=e.value.length; e.setSelectionRange(n,n); } } } }
-document.addEventListener('input',e=>{ if(e.target.id==='blq'){ BL.q=e.target.value; renderBL(); } });
+  <div id="blBody">${body}</div></div>`; }
+document.addEventListener('input',e=>{ if(e.target.id==='blq'){ BL.q=e.target.value; if(!e.isComposing) renderBL(); } });
+document.addEventListener('compositionend',e=>{ if(e.target.id==='blq'){ BL.q=e.target.value; renderBL(); } });
 document.addEventListener('change',e=>{ if(e.target.id==='blall'){ BL.all=e.target.checked; renderBL(); } });
 document.addEventListener('click',async e=>{ const t=e.target;
   if(t.id==='blOpen'){ BL.err=''; openBacklog(); return; }
@@ -917,7 +918,9 @@ document.addEventListener('change',async e=>{ const t=e.target;
     const q=JSON.parse(JSON.stringify(p)); q.s=q.s||{}; q.s[k]=q.s[k]||{}; if(v) q.s[k].p=v; else delete q.s[k].p; q.hist=[...(q.hist||[]).slice(-49),{at:new Date().toISOString(),by:S.me||'',msg:`${STEPS[k].l} 계획일 ${v?md(v):'지움'}`}]; await uPut(q); t.value=md(v); t.classList.remove('err'); return; }
   if(['site','pno','cust','type','rmk'].includes(f)){ const v=t.value.trim(); if(String(p[f]||'')===v) return; if(f==='pno'&&!v){ t.value=p.pno; toast('PROJECT NO.는 비울 수 없습니다'); return; } await write(p,{[f]:v},`${{site:'외주업체',pno:'PROJECT NO.',cust:'고객사',type:'TYPE',rmk:'비고'}[f]} → ${v}`); return; }
 });
-document.addEventListener('input',e=>{ if(e.target.id==='uq'){ S.uq=e.target.value; const pos=e.target.selectionStart; render(); const i=$('#uq'); if(i){ i.focus(); try{ i.setSelectionRange(pos,pos); }catch(_){} } } });
+function uqRender(t){ S.uq=t.value; const pos=t.selectionStart; render(); const i=$('#uq'); if(i){ i.focus(); try{ i.setSelectionRange(pos,pos); }catch(_){} } }
+document.addEventListener('input',e=>{ if(e.target.id==='uq'){ S.uq=e.target.value; if(!e.isComposing) uqRender(e.target); } });   /* 한글 조합 중에는 다시 그리지 않음 */
+document.addEventListener('compositionend',e=>{ if(e.target.id==='uq') uqRender(e.target); });
 document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.classList&&(e.target.classList.contains('ud')||e.target.classList.contains('ut'))) e.target.blur(); if(e.key==='Escape'&&$('#layer').innerHTML) closeL(); });
 document.addEventListener('focusout',()=>{ if(S.upend&&S.tab==='units') setTimeout(()=>{ if(uFocused()) return; S.upend=false; render(); },0); });
 
