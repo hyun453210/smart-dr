@@ -145,12 +145,14 @@ function vToday(){ const D=M.date, doc=dayDoc(D), rows=rowsOf(doc), ed=canEdit(d
   else if(doc.date>TODAY) h+='<div class="note">앞으로의 날짜입니다. 당일에 입력할 수 있습니다.</div>';
   else if(ed) h+='<div class="note" style="margin-bottom:10px">공정마다 오늘 <b>완료</b>했는지 고르세요. <b>미완료</b>면 사유 코드와 만회 계획을 적어 주세요. 회사 사유(C)는 <b>오늘 입력한 것만</b> 인정됩니다.</div>';
   return h+rows.map(x=>card(x,D,ed)).join(''); }
+function bcFresh(x){ return !!(x&&x.at&&Date.now()-Date.parse(x.at)<3*864e5); }
+function bcText(x){ return `목표일 변경 ${x.from?md(x.from):'없음'} → ${x.to?md(x.to):'없음'}`; }
 function card({rk,r,u,k},D,ed){ const res=rowRes(r), busy=M.busy[rk];
   const cr=r.cr>0?`<span class="tag ${r.cr>=3?'cr3':'cr'}">이관 ${r.cr}회</span>`:'';
   const b=(v,l)=>`<button type="button" class="${v} ${res===v?'on':''}" data-a="res" data-v="${rk}|${v}" ${ed&&!busy?'':'disabled'} aria-pressed="${res===v}">${l}</button>`;
   const ng=res==='ng';
   return `<div class="rc ${res||''}" id="c-${rk}"><div class="rh"><b>${esc(u.pno)}</b><span class="muted">${esc(u.type||'')}</span>${cr}</div>
-    <div class="rstep">${esc(STEPS[k].l)}</div>${r.cr>0?`<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">처음 목표일 ${md(r.orig||'')}${r.prs?` · 전날 사유 ${esc(rsLabel(r.prs))}`:''}</div>`:''}
+    <div class="rstep">${esc(STEPS[k].l)}</div>${r.bc?`<div style="margin:-4px 0 8px"><span class="tag cr">${bcText(r.bc)}</span></div>`:''}${r.cr>0?`<div class="muted" style="font-size:12.5px;margin:-4px 0 8px">처음 목표일 ${md(r.orig||'')}${r.prs?` · 전날 사유 ${esc(rsLabel(r.prs))}`:''}</div>`:''}
     <div class="rb">${b('done','완료')}${b('ng','미완료')}</div>
     ${ng||(!ed&&(r.rs||r.rec||r.memo))?`<div class="rx">
       ${ng?`<label>사유 코드 ${!r.rs&&ed?'<span class="hintr">· 골라 주세요</span>':''}<select data-f="rs" data-rk="${rk}" ${ed?'':'disabled'} class="${!r.rs&&ed?'need':''}">${rsOpts(r.rs)}</select></label>
@@ -173,7 +175,7 @@ function vWeek(){ const ws=M.ws; let h=`<div class="dnav"><button class="btn" ty
 function vUnits(){ const us=units(); if(!us.length) return '<div class="empty">진행 중인 호기가 없습니다.</div>';
   return `<div class="note" style="margin-bottom:10px">호기별 7개 공정의 완료 목표일과 완료 여부입니다. <b style="color:var(--bad)">빨강</b> = 목표일이 지났는데 미완료.</div>`+us.map(u=>{ const n=DR_KEYS.filter(k=>done(u,k)).length;
     return `<div class="uc"><div class="rh"><b>${esc(u.pno)}</b><span class="muted">${esc(u.type||'')}</span><span class="tag ${n===7?'ok':'pl'}" style="margin-left:auto">${n}/7 완료</span></div>
-     <div class="steps">${DR_KEYS.map(k=>{ const d=done(u,k), p=planD(u,k), late=!d&&p&&p<TODAY; return `<div class="${d?'d':late?'l':''}"><b>${d?'완료':p?md(p):'–'}</b>${esc(STEPS[k].l.replace('1차검수(DRY)','1차검수').replace(' 작업','').replace('Frame ','F/'))}</div>`; }).join('')}</div></div>`; }).join(''); }
+     <div class="steps">${DR_KEYS.map(k=>{ const d=done(u,k), p=planD(u,k), late=!d&&p&&p<TODAY; return `<div class="${d?'d':late?'l':''}"><b>${d?'완료':p?md(p):'–'}</b>${!d&&bcFresh(u.s[k]&&u.s[k].pc)?`<i style="display:block;font-style:normal;font-size:10px;color:var(--warn)">변경됨</i>`:''}${esc(STEPS[k].l.replace('1차검수(DRY)','1차검수').replace(' 작업','').replace('Frame ','F/'))}</div>`; }).join('')}</div></div>`; }).join(''); }
 
 /* ---------- 저장 ---------- */
 async function save(rk,patch){ const id=`${M.date}_${M.sc}`, doc=C('drd')[id], r=doc&&doc.rows&&doc.rows[rk]; if(!r) return;
